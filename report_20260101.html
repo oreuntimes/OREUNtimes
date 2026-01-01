@@ -1,0 +1,3747 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OREUN TIMES - PREMIUM MARKET INTELLIGENCE</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 17 UMD + Babel -->
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide (vanilla) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    html, body { height: 100%; background: #0b0e11; margin: 0; padding: 0; }
+    /* Local font (optional). Place IBMPlexSansCondensed-Bold.woff2 in ./fonts/ to prefer offline load. */
+    @font-face {
+      font-family: 'IBM Plex Sans Condensed';
+      src: url('./fonts/IBMPlexSansCondensed-Bold.woff2') format('woff2');
+      font-style: normal;
+      font-weight: 800;
+      font-display: swap;
+    }
+
+    /* Google + Bunny (fallback) */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=JetBrains+Mono:wght@400;800&family=IBM+Plex+Mono:wght@600&family=IBM+Plex+Sans:wght@700;900&display=swap');
+    @import url('https://fonts.bunny.net/css?family=ibm-plex-sans-condensed:700,800');
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    
+    /* 아이콘 로드 전 기본 크기 확보 */
+    [data-lucide] {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+    }
+
+    .bg-grid-overlay { background-image: radial-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 0); background-size: 10px 10px; }
+    .bg-grid-orange { background-image: radial-gradient(rgba(255, 157, 0, 0.05) 1px, transparent 0); background-size: 8px 8px; }
+    .bg-grid-blue-sub { background-image: radial-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 0); background-size: 10px 10px; }
+    
+    .terminal-cursor { display: inline-block; width: 8px; height: 16px; background: #ff9d00; margin-left: 4px; vertical-align: middle; }
+    
+    .bb-key { background: #333; color: #fff; padding: 1px 5px; border-radius: 2px; font-size: 9px; border-bottom: 2px solid #000; font-weight: 800; }
+    .bb-key-orange { background: #ff9d00; color: #000; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0e11; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    details summary::-webkit-details-marker { display: none; }
+    summary { list-style: none; outline: none; }
+
+    /* HUD Glow Utilities */
+    .shadow-cyan-glow { box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+    .shadow-cyan-text-glow { text-shadow: 0 0 8px rgba(0, 229, 255, 0.6); }
+    .shadow-orange-glow { box-shadow: 0 0 10px rgba(255, 157, 0, 0.4); }
+
+    /* Bloomberg-like condensed sans for commodity titles */
+    .font-bloomberg {
+      font-family: 'IBM Plex Sans Condensed', 'IBM Plex Sans', 'Helvetica Neue', 'Arial Narrow', Arial, sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      font-stretch: condensed;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+const { useEffect, useState } = React;
+
+/* ===========================
+   ICON SHIM (Factory)
+   =========================== */
+const LucideIcon = ({ name, className = "", ...rest }) => (
+  <i data-lucide={name} className={className} {...rest}></i>
+);
+
+const makeIcon = (name) =>
+  React.memo(({ className = "", ...rest }) => (
+    <LucideIcon name={name} className={className} {...rest} />
+  ));
+
+const Icons = {
+  Monitor: makeIcon("monitor"),
+  TrendingUp: makeIcon("trending-up"),
+  TrendingDown: makeIcon("trending-down"),
+  Activity: makeIcon("activity"),
+  ChevronRight: makeIcon("chevron-right"),
+  ChevronDown: makeIcon("chevron-down"),
+  Cpu: makeIcon("cpu"),
+  Globe: makeIcon("globe"),
+  ShieldCheck: makeIcon("shield-check"),
+  Boxes: makeIcon("boxes"),
+  Network: makeIcon("network"),
+  Database: makeIcon("database"),
+  Zap: makeIcon("zap"),
+  Layers: makeIcon("layers"),
+  Mic2: makeIcon("mic-2"),
+  BarChart3: makeIcon("bar-chart-3"),
+  Calendar: makeIcon("calendar"),
+  Bell: makeIcon("bell"),
+  Target: makeIcon("target"),
+  Compass: makeIcon("compass"),
+  Terminal: makeIcon("terminal"),
+  Sparkles: makeIcon("sparkles"),
+  ShieldAlert: makeIcon("shield-alert"),
+  Settings: makeIcon("settings"),
+  Layout: makeIcon("layout"),
+  EyeOff: makeIcon("eye-off"),
+  Server: makeIcon("server"),
+  AlertTriangle: makeIcon("alert-triangle"),
+
+  ChipIcon: makeIcon("cpu"),
+  PowerIcon: makeIcon("zap"),
+};
+
+const {
+  Monitor, TrendingUp, TrendingDown, Activity, ChevronRight, ChevronDown, Cpu, Globe, ShieldCheck,
+  Boxes, Network, Database, Zap, Layers, Mic2, BarChart3, Calendar, Bell, Target,
+  Compass, Terminal, Sparkles, ShieldAlert, Settings, Layout, EyeOff, Server, AlertTriangle,
+  ChipIcon, PowerIcon,
+} = Icons;
+
+// [SECTION 1: HELPER FUNCTIONS]
+const getDirection = (chgStr) => {
+  if (!chgStr) return 'flat';
+
+  // 문자열에서 숫자 추출 ("+1.25%" → 1.25, "-0.3%" → -0.3)
+  const numStr = chgStr.replace('%', '').replace('+', '').trim();
+  const value = parseFloat(numStr);
+
+  // 숫자 변환 실패 시 flat
+  if (isNaN(value)) return 'flat';
+
+  // 새로운 기준: -0.5% ~ +0.5% 사이는 보합
+  if (value > 0.5) return 'up';       // +0.5% 초과 → 상승
+  if (value < -0.5) return 'down';    // -0.5% 미만 → 하락
+  return 'flat';                       // -0.5% ~ +0.5% → 보합
+};
+
+const getColorClass = (chgStr) => {
+  const dir = getDirection(chgStr);
+  if (dir === 'up') return 'text-[#00ff00]';
+  if (dir === 'down') return 'text-[#FF073A]';
+  return 'text-white';
+};
+
+const statusToDirection = (status) => {
+  if (status === 'is-up') return 'up';
+  if (status === 'is-down') return 'down';
+  return 'flat';
+};
+
+const VOICE_TAG_LABELS = {
+  FED: "연준",
+  PRESIDENT: "대통령",
+  GOV: "정부",
+  CEO: "CEO",
+  BIGTECH: "빅테크",
+  ANALYST: "애널리스트",
+  MEDIA: "언론",
+  WALLST: "월가",
+  BANK: "은행장",
+  VOLATILITY: "변동성",
+  GLOBAL: "해외정상"
+};
+
+const VOICE_TAG_ORDER = [
+  "FED",
+  "PRESIDENT",
+  "GOV",
+  "CEO",
+  "BIGTECH",
+  "WALLST",
+  "BANK",
+  "ANALYST",
+  "MEDIA",
+  "VOLATILITY",
+  "GLOBAL"
+];
+
+const TICKER_NAME_MAP = {
+  AAPL: "Apple",
+  MSFT: "Microsoft",
+  NVDA: "NVIDIA",
+  AVGO: "Broadcom",
+  AMD: "AMD",
+  SMCI: "Super Micro Computer",
+  META: "Meta Platforms",
+  GOOGL: "Alphabet",
+  NFLX: "Netflix",
+  TTD: "The Trade Desk",
+  PINS: "Pinterest",
+  DIS: "Walt Disney",
+  AMZN: "Amazon",
+  TSLA: "Tesla",
+  HD: "Home Depot",
+  NKE: "Nike",
+  MCD: "McDonald's",
+  GM: "General Motors",
+  JPM: "JPMorgan Chase",
+  BAC: "Bank of America",
+  GS: "Goldman Sachs",
+  MS: "Morgan Stanley",
+  C: "Citigroup",
+  WFC: "Wells Fargo",
+  CAT: "Caterpillar",
+  GE: "GE Aerospace",
+  HON: "Honeywell",
+  BA: "Boeing",
+  ETN: "Eaton",
+  LMT: "Lockheed Martin",
+  XOM: "Exxon Mobil",
+  CVX: "Chevron",
+  SLB: "Schlumberger",
+  OXY: "Occidental Petroleum",
+  COP: "ConocoPhillips",
+  EOG: "EOG Resources",
+  LIN: "Linde",
+  APD: "Air Products",
+  FCX: "Freeport-McMoRan",
+  NUE: "Nucor",
+  DOW: "Dow",
+  ALB: "Albemarle",
+  UNH: "UnitedHealth",
+  JNJ: "Johnson & Johnson",
+  PFE: "Pfizer",
+  LLY: "Eli Lilly",
+  MRK: "Merck",
+  ABBV: "AbbVie",
+  PG: "Procter & Gamble",
+  KO: "Coca-Cola",
+  WMT: "Walmart",
+  COST: "Costco",
+  PEP: "PepsiCo",
+  MDLZ: "Mondelez",
+  NEE: "NextEra Energy",
+  DUK: "Duke Energy",
+  SO: "Southern Company",
+  EXC: "Exelon",
+  AEP: "American Electric Power",
+  XEL: "Xcel Energy",
+  PLD: "Prologis",
+  AMT: "American Tower",
+  SPG: "Simon Property",
+  O: "Realty Income",
+  EQIX: "Equinix",
+  DLR: "Digital Realty",
+  ANET: "Arista Networks",
+  MRVL: "Marvell"
+};
+
+const getTickerTooltip = (ticker) => {
+  const name = TICKER_NAME_MAP[ticker];
+  return name ? `${ticker} · ${name}` : null;
+};
+
+const getVoiceTagLabel = (tag) => VOICE_TAG_LABELS[tag] || tag;
+
+const getVoiceTagStyle = (tag) => {
+  if (tag === 'FED') return 'border-[#00e5ff]/40 text-[#00e5ff] bg-[#00e5ff]/10';
+  if (tag === 'PRESIDENT') return 'border-[#ff4444]/40 text-[#ff4444] bg-[#ff4444]/10';
+  if (tag === 'GOV') return 'border-[#ff9d00]/40 text-[#ff9d00] bg-[#ff9d00]/10';
+  if (tag === 'MEDIA') return 'border-[#888]/40 text-[#aaa] bg-white/5';
+  if (tag === 'ANALYST') return 'border-[#00ff00]/40 text-[#00ff00] bg-[#00ff00]/10';
+  if (tag === 'CEO' || tag === 'BIGTECH') return 'border-[#00b3ff]/40 text-[#00b3ff] bg-[#00b3ff]/10';
+  if (tag === 'WALLST' || tag === 'BANK') return 'border-[#ffb000]/40 text-[#ffb000] bg-[#ffb000]/10';
+  if (tag === 'VOLATILITY') return 'border-[#FF073A]/40 text-[#FF073A] bg-[#FF073A]/10';
+  if (tag === 'GLOBAL') return 'border-[#c0c0c0]/40 text-[#c0c0c0] bg-white/10';
+  return 'border-white/10 text-[#aaa] bg-white/5';
+};
+
+const normalizeVoiceTags = (tags = []) => {
+  const unique = Array.from(new Set(tags.filter(Boolean)));
+  if (unique.includes('FED')) {
+    return unique.filter((tag) => tag !== 'GOV');
+  }
+  return unique;
+};
+
+const DOMESTIC_TEMPLATE = [
+  { key: "nightFutures", label: "KOSPI200 NIGHT SESSION (코스피200 야간선물)", layout: "ohlc" },
+  { key: "alphaSectors", label: "ALPHA SECTORS (주도 업종)", layout: "chips", chipTheme: "alphaSectors", chipLayout: "grid" },
+  { key: "openingCall", label: "OPENING CALL (예상 지수 & 시초가 밴드)", layout: "metrics", metricCols: 2, metricBorderClass: "border-[#7fe9ff]/60", metricGlowClass: "shadow-[0_0_12px_rgba(127,233,255,0.25)]" },
+  { key: "coreImpact", label: "CORE IMPACT (예상 핵심 테마)", layout: "chips", chipTheme: "coreImpact", chipLayout: "grid" },
+  { key: "usdKrw", label: "USD/KRW (원달러 환율)", layout: "center" },
+  { key: "riskFactors", label: "RISK FACTORS (리스크 요인)", layout: "chips", chipTheme: "riskFactors", chipLayout: "grid" }
+];
+
+const extractDomesticDelta = (value) => {
+  if (value === null || value === undefined) return null;
+  const text = String(value);
+  const parenMatch = text.match(/\(([^)]+)\)/);
+  if (parenMatch && parenMatch[1]) {
+    const signedMatch = parenMatch[1].match(/[+-]?\d+(?:\.\d+)?%?/);
+    if (signedMatch) return signedMatch[0];
+  }
+  const fallbackMatch = text.match(/[+-]\d+(?:\.\d+)?%?/);
+  return fallbackMatch ? fallbackMatch[0] : null;
+};
+
+const parseDomesticNumber = (value) => {
+  if (value === null || value === undefined) return null;
+  const cleaned = String(value).replace(/,/g, "").trim();
+  const num = parseFloat(cleaned);
+  return Number.isFinite(num) ? num : null;
+};
+
+const formatSignedPercent = (value) => {
+  if (!Number.isFinite(value)) return null;
+  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+  return `${sign}${Math.abs(value).toFixed(2)}%`;
+};
+
+const getOhlcChangePct = (ohlc, val) => {
+  const open = parseDomesticNumber(ohlc && ohlc.open);
+  const close = parseDomesticNumber(ohlc && ohlc.close);
+  if (Number.isFinite(open) && Number.isFinite(close) && open !== 0) {
+    return formatSignedPercent(((close - open) / open) * 100);
+  }
+  const deltaStr = extractDomesticDelta(val);
+  if (!deltaStr) return null;
+  return deltaStr.includes("%") ? deltaStr : `${deltaStr}%`;
+};
+
+const splitCenterValue = (value) => {
+  if (value === null || value === undefined) return { base: "-", delta: null };
+  const text = String(value).trim();
+  if (!text) return { base: "-", delta: null };
+  const parenMatch = text.match(/\(([^)]+)\)/);
+  const base = parenMatch ? text.replace(/\s*\([^)]+\)\s*/, "").trim() : text;
+  let delta = parenMatch && parenMatch[1] ? parenMatch[1].trim() : null;
+  if (!delta) {
+    const extracted = extractDomesticDelta(text);
+    delta = extracted ? extracted.trim() : null;
+  }
+  if (delta && !delta.includes("%")) {
+    delta = `${delta}%`;
+  }
+  return { base: base || "-", delta };
+};
+
+const getDomesticValue = (values, key) => {
+  const item = values && values[key];
+  if (!item) return { val: "-", statusClass: "flat" };
+  const deltaStr = extractDomesticDelta(item.val);
+  const derivedStatus = deltaStr ? getDirection(deltaStr) : (item.statusClass || "flat");
+  return { ...item, statusClass: derivedStatus };
+};
+
+const DOMESTIC_CHIP_THEMES = {
+  alphaSectors: "border-[#00ff00]/45 text-[#caffca] bg-[#0b1a10]/80",
+  coreImpact: "border-[#ff9d00]/45 text-[#ffd29a] bg-[#1a1208]/80",
+  riskFactors: "border-[#ff4444]/45 text-[#ffbcc6] bg-[#1a0b0e]/80"
+};
+
+const splitDomesticChips = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry).trim()).filter(Boolean);
+  }
+  if (!value) return [];
+  return String(value)
+    .split(/\s*(?:\/|\||·|•|,)\s*/g)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+};
+
+const splitDomesticPlain = (value) => {
+  if (value === null || value === undefined) return ["-"];
+  const raw = String(value).trim();
+  if (!raw) return ["-"];
+  const parts = raw.split(/\s*\/\s*/g).map((entry) => entry.trim()).filter(Boolean);
+  if (parts.length <= 1) return [raw];
+  return [parts[0], parts.slice(1).join(" / ")];
+};
+
+const VOICE_CARD_THEMES = {
+  fed: {
+    cardBg: 'bg-[#151109]',
+    cardBorder: 'border-[#ff9d00]/45',
+    hoverBorder: 'hover:border-[#ff9d00]/70',
+    metaBg: 'bg-[#1a140a]/60',
+    metaBorder: 'border-[#ff9d00]/25',
+    accent: 'bg-[#ff9d00]',
+    sideBar: 'bg-[#ff9d00]/12 group-hover/voice:bg-[#ff9d00]/45'
+  },
+  ceo: {
+    cardBg: 'bg-[#0c120d]',
+    cardBorder: 'border-[#00ff00]/35',
+    hoverBorder: 'hover:border-[#00ff00]/60',
+    metaBg: 'bg-[#0b1a0e]/55',
+    metaBorder: 'border-[#00ff00]/20',
+    accent: 'bg-[#00ff00]',
+    sideBar: 'bg-[#00ff00]/12 group-hover/voice:bg-[#00ff00]/40'
+  },
+  global: {
+    cardBg: 'bg-[#0b1016]',
+    cardBorder: 'border-[#00e5ff]/35',
+    hoverBorder: 'hover:border-[#00e5ff]/60',
+    metaBg: 'bg-[#0b1720]/55',
+    metaBorder: 'border-[#00e5ff]/20',
+    accent: 'bg-[#00e5ff]',
+    sideBar: 'bg-[#00e5ff]/12 group-hover/voice:bg-[#00e5ff]/40'
+  },
+  timiraos: {
+    cardBg: 'bg-[#0f1116]',
+    cardBorder: 'border-[#ff4444]/45',
+    hoverBorder: 'hover:border-[#ff4444]/70',
+    metaBg: 'bg-[#12151b]/60',
+    metaBorder: 'border-[#ff4444]/45',
+    accent: 'bg-[#ff4444]',
+    sideBar: 'bg-[#ff4444]/15 group-hover/voice:bg-[#ff4444]/45'
+  },
+  neutral: {
+    cardBg: 'bg-[#0d1117]',
+    cardBorder: 'border-[#222]',
+    hoverBorder: 'hover:border-[#444]',
+    metaBg: 'bg-black/40',
+    metaBorder: 'border-[#222]',
+    accent: 'bg-[#666]',
+    sideBar: 'bg-[#666]/10 group-hover/voice:bg-[#666]/35'
+  }
+};
+
+const getVoiceCardTheme = (tags = []) => {
+  const tagSet = new Set(tags);
+  if (tagSet.has('FED')) return VOICE_CARD_THEMES.fed;
+  if (tagSet.has('CEO') || tagSet.has('BIGTECH')) return VOICE_CARD_THEMES.ceo;
+  if (tagSet.has('GLOBAL') || tagSet.has('PRESIDENT')) return VOICE_CARD_THEMES.global;
+  if (tagSet.has('ANALYST') || tagSet.has('WALLST') || tagSet.has('BANK') || tagSet.has('MEDIA')) {
+    return VOICE_CARD_THEMES.neutral;
+  }
+  return VOICE_CARD_THEMES.neutral;
+};
+
+const hasVoiceData = (voice) => {
+  if (!voice) return false;
+  const msg = typeof voice.msg === 'string' ? voice.msg.trim() : '';
+  const quote = typeof voice.keyQuote === 'string' ? voice.keyQuote.trim() : '';
+  return Boolean(msg || quote);
+};
+
+// [SECTION 2: DATA INJECTION POINT]
+const CMC_API_KEY = "55ffa49c3de44e1c9711ecfc67f23b6a"; // TODO: rotate/secure for production
+const CMC_PROXY_LOCAL = "http://localhost:3001"; // run cmc-proxy.js
+const MARKET_DATA = {
+  "date": "2025.12.31",
+  "generationTime": "08:30:00",
+  "targetDateUS": "2025-12-31 (US CLOSE)",
+  "publishKST": "2026-01-01 08:30 KST",
+  "headline": "연말 마지막 거래일 유동성 급감 속 주요 지수 동반 하락...귀금속 급락·에너지 약세",
+  "keyIndicators": {
+    "nasdaq": {
+      "val": "25,249.85",
+      "chg": "-0.84%",
+      "class": "down"
+    },
+    "vix": {
+      "val": "14.95",
+      "chg": "+4.33%",
+      "class": "up"
+    },
+    "fearGreed": {
+      "val": "44",
+      "label": "FEAR",
+      "class": "down"
+    }
+  },
+  "indices": [
+    {
+      "name": "DOW JONES (다우존스)",
+      "ticker": "DJI",
+      "spot": "48,063.29",
+      "spotChg": "-0.63%",
+      "low": "48,063.29",
+      "high": "48,367.06",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "YM",
+      "trend": [
+        47739.32,
+        47560.29,
+        48057.75,
+        48704.01,
+        48458.05,
+        48416.56,
+        48114.26,
+        47885.97,
+        47951.85,
+        48134.89,
+        48362.68,
+        48442.41,
+        48731.16,
+        48731.16,
+        48710.97,
+        48461.93,
+        48367.06,
+        48236.58,
+        48367.06,
+        48063.29
+      ]
+    },
+    {
+      "name": "VIX (변동성 지수)",
+      "ticker": "VIX",
+      "spot": "14.95",
+      "spotChg": "+4.33%",
+      "low": "14.33",
+      "high": "14.95",
+      "fut": null,
+      "futChg": null,
+      "trend": [
+        15.41,
+        16.66,
+        16.93,
+        15.77,
+        14.85,
+        15.74,
+        16.5,
+        16.48,
+        17.62,
+        16.87,
+        14.91,
+        14.08,
+        14.0,
+        13.47,
+        13.6,
+        14.2,
+        14.33,
+        14.61,
+        14.33,
+        14.95
+      ]
+    },
+    {
+      "name": "NASDAQ 100 (나스닥 100)",
+      "ticker": "NDX",
+      "spot": "25,249.85",
+      "spotChg": "-0.84%",
+      "low": "25,249.85",
+      "high": "25,462.56",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "NQ",
+      "trend": [
+        25692.05,
+        25627.95,
+        25668.69,
+        25776.44,
+        25686.69,
+        25196.73,
+        25067.27,
+        25132.94,
+        24647.61,
+        25019.37,
+        25346.18,
+        25461.7,
+        25587.83,
+        25656.15,
+        25644.39,
+        25525.56,
+        25462.56,
+        25385.03,
+        25462.56,
+        25249.85
+      ]
+    },
+    {
+      "name": "MOVE INDEX (채권 변동성)",
+      "ticker": "MOVE",
+      "spot": "63.96",
+      "spotChg": "-0.03%",
+      "low": "63.96",
+      "high": "63.98",
+      "fut": null,
+      "futChg": null,
+      "trend": [
+        66.46,
+        65.69,
+        67.28,
+        72.3,
+        75.38,
+        68.62,
+        69.24,
+        69.25,
+        73.31,
+        67.14,
+        62.74,
+        60.01,
+        59.41,
+        61.7,
+        61.17,
+        59.48,
+        58.5,
+        59.21,
+        63.98,
+        63.96
+      ]
+    },
+    {
+      "name": "S&P 500 (에스엔피 500)",
+      "ticker": "SPX",
+      "spot": "6,845.50",
+      "spotChg": "-0.74%",
+      "low": "6,845.50",
+      "high": "6,896.24",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "ES",
+      "trend": [
+        6870.4,
+        6846.51,
+        6840.51,
+        6886.68,
+        6901.0,
+        6827.41,
+        6816.51,
+        6800.26,
+        6721.43,
+        6774.76,
+        6834.5,
+        6878.49,
+        6909.79,
+        6932.05,
+        6929.94,
+        6905.74,
+        6896.24,
+        6885.63,
+        6896.24,
+        6845.5
+      ]
+    },
+    {
+      "name": "FEAR & GREED (공포탐욕지수)",
+      "ticker": "F&G",
+      "spot": "44",
+      "spotChg": "FEAR",
+      "low": "31",
+      "high": "58",
+      "fut": null,
+      "futChg": null,
+      "trend": [
+        31,
+        32,
+        40,
+        48,
+        42,
+        52,
+        45,
+        47,
+        44,
+        50,
+        57,
+        58,
+        54,
+        58,
+        53,
+        49,
+        48,
+        49,
+        48.0,
+        44.0
+      ]
+    },
+    {
+      "name": "RUSSELL 2000 (러셀 2000)",
+      "ticker": "RUT",
+      "spot": "2,481.91",
+      "spotChg": "-0.75%",
+      "low": "2,481.91",
+      "high": "2,500.59",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "RTY",
+      "trend": [
+        2521.48,
+        2520.98,
+        2526.24,
+        2559.61,
+        2590.61,
+        2551.46,
+        2530.67,
+        2519.3,
+        2492.29,
+        2507.87,
+        2529.42,
+        2558.78,
+        2541.12,
+        2548.08,
+        2534.35,
+        2519.8,
+        2500.59,
+        2488.63,
+        2500.59,
+        2481.91
+      ]
+    },
+    {
+      "name": "DOLLAR INDEX (달러 인덱스)",
+      "ticker": "DXY",
+      "spot": "98.28",
+      "spotChg": "+0.06%",
+      "low": "98.22",
+      "high": "98.28",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "DX",
+      "trend": [
+        98.99,
+        99.09,
+        99.22,
+        98.79,
+        98.35,
+        98.4,
+        98.31,
+        98.15,
+        98.37,
+        98.43,
+        98.6,
+        98.29,
+        97.94,
+        97.94,
+        98.02,
+        98.04,
+        98.24,
+        98.34,
+        98.24,
+        98.28
+      ]
+    },
+    {
+      "name": "PHILA. SEMICON (필라델피아 반도체)",
+      "ticker": "SOX",
+      "spot": "7,083.13",
+      "spotChg": "-1.20%",
+      "low": "7,083.13",
+      "high": "7,169.10",
+      "fut": null,
+      "futChg": null,
+      "trend": [
+        7294.8,
+        7375.2,
+        7372.5,
+        7467.5,
+        7411.5,
+        7033.6,
+        6990.4,
+        6958.4,
+        6695.3,
+        6863.6,
+        7067.9,
+        7145.6,
+        7184.5,
+        7204.4,
+        7207.6,
+        7178.3,
+        7169.1,
+        7148.6,
+        7169.1,
+        7083.13
+      ]
+    },
+    {
+      "name": "US 10Y YIELD (미 국채 10년)",
+      "ticker": "TNX",
+      "spot": "4.163%",
+      "spotChg": "+0.95%",
+      "low": "4.124%",
+      "high": "4.163%",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "ZN",
+      "trend": [
+        4.06,
+        4.11,
+        4.14,
+        4.17,
+        4.18,
+        4.13,
+        4.14,
+        4.19,
+        4.18,
+        4.15,
+        4.16,
+        4.12,
+        4.16,
+        4.17,
+        4.18,
+        4.15,
+        4.14,
+        4.12,
+        4.124,
+        4.163
+      ]
+    },
+    {
+      "name": "EQUITY PUT/CALL (풋콜 비율)",
+      "ticker": "CPCE",
+      "spot": "0.92",
+      "spotChg": "-",
+      "low": "0.43",
+      "high": "0.92",
+      "fut": null,
+      "futChg": null,
+      "trend": [
+        0.58,
+        0.5,
+        0.43,
+        0.65,
+        0.52,
+        0.59,
+        0.59,
+        0.57,
+        0.58,
+        0.74,
+        0.75,
+        0.59,
+        0.59,
+        0.61,
+        0.46,
+        0.57,
+        0.64,
+        0.67,
+        0.51,
+        0.92
+      ]
+    },
+    {
+      "name": "US 2Y YIELD (미 국채 2년)",
+      "ticker": "UST2Y",
+      "spot": "3.475%",
+      "spotChg": "+0.72%",
+      "low": "3.450%",
+      "high": "3.475%",
+      "fut": null,
+      "futChg": null,
+      "futTicker": "ZT",
+      "trend": [
+        3.49,
+        3.52,
+        3.56,
+        3.57,
+        3.61,
+        3.54,
+        3.52,
+        3.52,
+        3.51,
+        3.48,
+        3.49,
+        3.46,
+        3.48,
+        3.44,
+        3.48,
+        3.47,
+        3.46,
+        3.45,
+        3.45,
+        3.475
+      ]
+    },
+    {
+      "name": "KOSPI 200 FUTURES (야간선물)",
+      "ticker": "KOSPI200",
+      "spot": "610.35",
+      "spotChg": "0.00%",
+      "low": "610.35",
+      "high": "610.35",
+      "fut": null,
+      "futChg": null,
+      "trend": [
+        390.25,
+        610.35
+      ]
+    }
+  ],
+  "marketVoices": [
+    {
+      "name": "ADAM TURNQUIST",
+      "role": "LPL Financial Chief Technical Strategist",
+      "msg": "2025년은 회복력만으로 설명하기 어려울 만큼 강한 반등의 해였다.",
+      "keyQuote": "RESILIENCE YEAR",
+      "baseSentiment": "NEUTRAL",
+      "currentStance": "PRO-GROWTH",
+      "impact": "MEDIUM",
+      "tags": [
+        "ANALYST",
+        "WALLST"
+      ]
+    },
+    {
+      "name": "KEITH BUCHANAN",
+      "role": "Globalt Investments Senior PM",
+      "msg": "2025년의 경험 덕분에 2026년 관세 변화도 시장이 견딜 내성이 생겼다.",
+      "keyQuote": "TARIFF RESILIENCE",
+      "baseSentiment": "NEUTRAL",
+      "currentStance": "WATCHFUL",
+      "impact": "MEDIUM",
+      "tags": [
+        "ANALYST"
+      ]
+    },
+    {
+      "name": "GIUSEPPE SETTE",
+      "role": "Reflexivity Managing Partner",
+      "msg": "유동성이 얇은 환경에서는 차익 실현이 자연스럽게 발생한다.",
+      "keyQuote": "THIN LIQUIDITY",
+      "baseSentiment": "NEUTRAL",
+      "currentStance": "RISK-OFF",
+      "impact": "HIGH",
+      "tags": [
+        "ANALYST"
+      ]
+    },
+    {
+      "name": "STEVE SOSNICK",
+      "role": "Interactive Brokers Chief Strategist",
+      "msg": "산타 랠리조차 보이지 않은 것은 연말 흐름에서 이례적인 신호다.",
+      "keyQuote": "NO WINDOW DRESSING",
+      "baseSentiment": "CAUTION",
+      "currentStance": "DEFENSIVE",
+      "impact": "MEDIUM",
+      "tags": [
+        "ANALYST",
+        "BROKER"
+      ]
+    }
+  ],
+  "breakdown": {
+    "trigger": "연말 유동성 급감",
+    "driver": "포지션 정리 + FOMC 의사록 불확실성",
+    "mover": "귀금속 급락 · 빅테크 동반 조정",
+    "details": [
+      "거래량이 크게 줄어든 가운데 연말 포지션 정리 매물이 전반적으로 유입되며 지수 동반 하락.",
+      "CME의 귀금속 증거금 인상 이후 은·금이 급락하며 소재/광산주 약세 확대.",
+      "정책·관세 경로 불확실성이 부각되며 리스크온 재개는 연초로 이연."
+    ],
+    "insight": "연말 저유동성 구간에서는 가격 변동이 과장되기 쉬워, 방향성보다 포지셔닝 신호가 중요합니다.",
+    "correction": "금속 급락 구간은 변동성 확대로 이어질 수 있어 관련 테마 추격은 자제하는 편이 유리합니다."
+  },
+  "domestic": {
+    "nightFutures": {
+      "val": "610.35",
+      "statusClass": "flat",
+      "ohlc": {
+        "open": "610.35",
+        "low": "610.35",
+        "high": "610.35",
+        "close": "610.35"
+      }
+    },
+    "alphaSectors": {
+      "val": "-",
+      "statusClass": "flat"
+    },
+    "openingCall": {
+      "val": "-",
+      "statusClass": "flat",
+      "metrics": [
+        {
+          "label": "방향(변동폭)",
+          "value": "-",
+          "delta": null
+        },
+        {
+          "label": "밴드 상하단",
+          "value": "-",
+          "colorClass": "text-[#ddd]"
+        }
+      ]
+    },
+    "coreImpact": {
+      "val": "-",
+      "statusClass": "flat"
+    },
+    "usdKrw": {
+      "val": "-",
+      "statusClass": "flat"
+    },
+    "riskFactors": {
+      "val": "-",
+      "statusClass": "flat"
+    }
+  },
+  "gicsSectors": [
+    {
+      "name": "💻 INFO TECH",
+      "kName": "정보기술",
+      "ticker": "XLK",
+      "chg": "-0.99%",
+      "catalyst": "YEAR_END_TRIM",
+      "reason": "연말 차익실현으로 기술주 약세"
+    },
+    {
+      "name": "💵 Financials",
+      "kName": "금융",
+      "ticker": "XLF",
+      "chg": "-0.74%",
+      "catalyst": "LOW_LIQUIDITY",
+      "reason": "거래 위축 속 금융주 동반 조정"
+    },
+    {
+      "name": "🏥 Health Care",
+      "kName": "헬스케어",
+      "ticker": "XLV",
+      "chg": "-0.57%",
+      "catalyst": "DEFENSIVE_SOFT",
+      "reason": "방어주도 약세"
+    },
+    {
+      "name": "🛍️ CONS. DISC.",
+      "kName": "임의소비재",
+      "ticker": "XLY",
+      "chg": "-0.79%",
+      "catalyst": "CONSUMER_SOFT",
+      "reason": "소비주 전반 조정"
+    },
+    {
+      "name": "📱 COMM. SVC.",
+      "kName": "통신 서비스",
+      "ticker": "XLC",
+      "chg": "-0.48%",
+      "catalyst": "MEGACAP_SOFT",
+      "reason": "플랫폼주 차익실현"
+    },
+    {
+      "name": "🏗️ Industrials",
+      "kName": "산업재",
+      "ticker": "XLI",
+      "chg": "-0.83%",
+      "catalyst": "RISK_OFF",
+      "reason": "경기 민감주 하락"
+    },
+    {
+      "name": "💡 Utilities",
+      "kName": "유틸리티",
+      "ticker": "XLU",
+      "chg": "-0.63%",
+      "catalyst": "DEFENSIVE_SOFT",
+      "reason": "방어 섹터 혼조"
+    },
+    {
+      "name": "🛢️ Energy",
+      "kName": "에너지",
+      "ticker": "XLE",
+      "chg": "-0.56%",
+      "catalyst": "OIL_DOWN",
+      "reason": "WTI 약세 영향"
+    },
+    {
+      "name": "🧪 Materials",
+      "kName": "소재",
+      "ticker": "XLB",
+      "chg": "-0.83%",
+      "catalyst": "METALS_SLIDE",
+      "reason": "금속 급락 여파"
+    },
+    {
+      "name": "🛒 CONS. STAPLE",
+      "kName": "필수소비재",
+      "ticker": "XLP",
+      "chg": "-0.60%",
+      "catalyst": "DEFENSIVE_SOFT",
+      "reason": "필수소비재 약세"
+    },
+    {
+      "name": "🏠 Real Estate",
+      "kName": "부동산",
+      "ticker": "XLRE",
+      "chg": "-0.91%",
+      "catalyst": "RATE_UP",
+      "reason": "금리 상승 압력"
+    },
+    {
+      "name": "🤖 AI INFRA",
+      "kName": "AI 인프라",
+      "ticker": "AIQ",
+      "chg": "-0.97%",
+      "catalyst": "AI_TRIM",
+      "reason": "AI 테마 동반 조정"
+    }
+  ],
+  "coreThemes": [
+    {
+      "title": "YEAR-END LIQUIDITY DRAIN",
+      "kName": "연말 유동성 급감",
+      "tag": "LIQUIDITY",
+      "intensity": "HIGH",
+      "desc": "휴장 직전 거래량 급감으로 가격 변동이 과장되며 지수 동반 하락이 발생했습니다."
+    },
+    {
+      "title": "PRECIOUS METALS MARGIN HIKE",
+      "kName": "귀금속 증거금 인상",
+      "tag": "METALS",
+      "intensity": "HIGH",
+      "desc": "CME 증거금 상향 이후 은·금이 급락하며 관련주 변동성이 확대됐습니다."
+    },
+    {
+      "title": "POLICY/TARIFF OVERHANG",
+      "kName": "정책·관세 불확실성",
+      "tag": "POLICY",
+      "intensity": "MEDIUM",
+      "desc": "FOMC 의사록의 분열 신호와 관세 변수로 연초 리스크온 복귀가 지연되고 있습니다."
+    },
+    {
+      "title": "AI LEADERSHIP COOLS",
+      "kName": "AI 리더십 숨고르기",
+      "tag": "AI",
+      "intensity": "MEDIUM",
+      "desc": "연중 상승을 이끈 빅테크/AI 종목들이 연말 포지션 정리로 동반 조정받았습니다."
+    }
+  ],
+  "m7Leaders": [
+    {
+      "category": "GPU / DataCenter",
+      "name": "NVIDIA",
+      "kName": "엔비디아",
+      "ticker": "NVDA",
+      "chg": "-0.55%",
+      "status": "is-down",
+      "aiFocus": "Blackwell GB200",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "186.50 (Support)",
+      "dailyFocus": "AI 추론 칩 전략 재검토",
+      "riskIndex": 32,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/sco/2/21/Nvidia_logo.svg"
+    },
+    {
+      "category": "Hardware / AI",
+      "name": "APPLE",
+      "kName": "애플",
+      "ticker": "AAPL",
+      "chg": "-0.45%",
+      "status": "is-down",
+      "aiFocus": "Apple Intelligence",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "236.00 (Consolidation)",
+      "dailyFocus": "비중국 브랜드 출하량 +128%",
+      "riskIndex": 18,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
+    },
+    {
+      "category": "E-commerce",
+      "name": "AMAZON",
+      "kName": "아마존",
+      "ticker": "AMZN",
+      "chg": "-0.74%",
+      "status": "is-down",
+      "aiFocus": "AWS Growth",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "213.50 (Support)",
+      "dailyFocus": "드론 배송 사업 재편",
+      "riskIndex": 16,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg"
+    },
+    {
+      "category": "Search / AI",
+      "name": "ALPHABET",
+      "kName": "알파벳",
+      "ticker": "GOOGL",
+      "chg": "-0.27%",
+      "status": "is-down",
+      "aiFocus": "Gemini 2.0",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "180.50 (Pivot)",
+      "dailyFocus": "TPU vs GPU 경쟁 심화",
+      "riskIndex": 23,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
+    },
+    {
+      "category": "Social / Ad",
+      "name": "META",
+      "kName": "메타",
+      "ticker": "META",
+      "chg": "-0.88%",
+      "status": "is-down",
+      "aiFocus": "Llama 4.0 / Manus",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "590.00 (Support)",
+      "dailyFocus": "AI 에이전트 M&A 전략",
+      "riskIndex": 21,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg"
+    },
+    {
+      "category": "Software / Cloud",
+      "name": "MICROSOFT",
+      "kName": "마이크로소프트",
+      "ticker": "MSFT",
+      "chg": "-0.79%",
+      "status": "is-down",
+      "aiFocus": "Azure/Copilot",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "432.00 (Support)",
+      "dailyFocus": "AI Capex 지출 우려",
+      "riskIndex": 17,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
+    },
+    {
+      "category": "Auto / Robotics",
+      "name": "TESLA",
+      "kName": "테슬라",
+      "ticker": "TSLA",
+      "chg": "-1.04%",
+      "status": "is-down",
+      "aiFocus": "FSD / Optimus",
+      "reason": "연말 포지션 정리 매물",
+      "keyLevel": "470.00 (Breakdown)",
+      "dailyFocus": "배터리 공급망 재편",
+      "riskIndex": 40,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Tesla_Motors.svg"
+    }
+  ],
+  "aiStack": {
+    "hardware": [
+      {
+        "category": "GPU/CPU",
+        "name": "NVIDIA",
+        "kName": "엔비디아",
+        "ticker": "NVDA",
+        "chg": "-0.55%",
+        "status": "is-down",
+        "aiFocus": "GPU",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "GPU/CPU",
+        "name": "AMD",
+        "kName": "AMD",
+        "ticker": "AMD",
+        "chg": "-0.55%",
+        "status": "is-down",
+        "aiFocus": "MI300X",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Foundry",
+        "name": "TSMC",
+        "kName": "TSMC",
+        "ticker": "TSM",
+        "chg": "+1.44%",
+        "status": "is-up",
+        "aiFocus": "2nm / CoWoS",
+        "reason": "대기 모드"
+      },
+      {
+        "category": "Lithography",
+        "name": "ASML",
+        "kName": "ASML",
+        "ticker": "ASML",
+        "chg": "-0.21%",
+        "status": "is-down",
+        "aiFocus": "EUV",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Memory",
+        "name": "MICRON",
+        "kName": "마이크론",
+        "ticker": "MU",
+        "chg": "-2.47%",
+        "status": "is-down",
+        "aiFocus": "HBM3E",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Memory/Foundry",
+        "name": "SAMSUNG",
+        "kName": "삼성전자",
+        "ticker": "005930",
+        "chg": "+0.33%",
+        "status": "is-up",
+        "aiFocus": "HBM / Foundry",
+        "reason": "관망세"
+      },
+      {
+        "category": "Memory",
+        "name": "KIOXIA",
+        "kName": "키옥시아·비상장",
+        "ticker": "PRIVATE",
+        "chg": "NAND SPOT +1.2%",
+        "status": "is-up",
+        "aiFocus": "NAND Flash",
+        "reason": "비상장 · NAND Spot Index로 추적"
+      },
+      {
+        "category": "Equipment",
+        "name": "APPLIED MATERIALS",
+        "kName": "어플라이드 머티어리얼즈",
+        "ticker": "AMAT",
+        "chg": "-1.15%",
+        "status": "is-down",
+        "aiFocus": "Deposition",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Equipment",
+        "name": "LAM RESEARCH",
+        "kName": "램리서치",
+        "ticker": "LRCX",
+        "chg": "-1.50%",
+        "status": "is-down",
+        "aiFocus": "Etch / Depo",
+        "reason": "연말 포지션 정리"
+      }
+    ],
+    "systems": [
+      {
+        "category": "Server OEM",
+        "name": "DELL",
+        "kName": "델 테크",
+        "ticker": "DELL",
+        "chg": "-1.59%",
+        "status": "is-down",
+        "aiFocus": "AI Server",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "AI Server",
+        "name": "SMCI",
+        "kName": "슈퍼마이크로",
+        "ticker": "SMCI",
+        "chg": "-1.28%",
+        "status": "is-down",
+        "aiFocus": "DLC Racks",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Enterprise",
+        "name": "HPE",
+        "kName": "HPE",
+        "ticker": "HPE",
+        "chg": "-0.21%",
+        "status": "is-down",
+        "aiFocus": "GreenLake AI",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Storage",
+        "name": "NETAPP",
+        "kName": "넷앱",
+        "ticker": "NTAP",
+        "chg": "-1.23%",
+        "status": "is-down",
+        "aiFocus": "AI Storage",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Storage",
+        "name": "SANDISK",
+        "kName": "샌디스크",
+        "ticker": "WDC",
+        "chg": "-2.15%",
+        "status": "is-down",
+        "aiFocus": "Enterprise SSD",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Storage",
+        "name": "SEAGATE",
+        "kName": "씨게이트",
+        "ticker": "STX",
+        "chg": "-1.67%",
+        "status": "is-down",
+        "aiFocus": "High-Cap HDD",
+        "reason": "연말 포지션 정리"
+      }
+    ],
+    "cloud": [
+      {
+        "category": "Networking",
+        "name": "BROADCOM",
+        "kName": "브로드컴",
+        "ticker": "AVGO",
+        "chg": "-1.07%",
+        "status": "is-down",
+        "aiFocus": "Ethernet Sw.",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Networking",
+        "name": "ARISTA",
+        "kName": "아리스타",
+        "ticker": "ANET",
+        "chg": "-1.06%",
+        "status": "is-down",
+        "aiFocus": "AI Spine Sw.",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Design",
+        "name": "MARVELL",
+        "kName": "마벨 테크",
+        "ticker": "MRVL",
+        "chg": "-2.05%",
+        "status": "is-down",
+        "aiFocus": "Custom ASIC",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Logic",
+        "name": "ARM",
+        "kName": "ARM",
+        "ticker": "ARM",
+        "chg": "-1.40%",
+        "status": "is-down",
+        "aiFocus": "v9 Architecture",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Cloud",
+        "name": "ORACLE",
+        "kName": "오라클",
+        "ticker": "ORCL",
+        "chg": "-1.17%",
+        "status": "is-down",
+        "aiFocus": "OCI / GPU Cl.",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Networking",
+        "name": "CISCO",
+        "kName": "시스코",
+        "ticker": "CSCO",
+        "chg": "-0.49%",
+        "status": "is-down",
+        "aiFocus": "Ethernet Fab.",
+        "reason": "연말 포지션 정리"
+      }
+    ],
+    "dataPower": [
+      {
+        "category": "Data OS",
+        "name": "PALANTIR",
+        "kName": "팔란티어",
+        "ticker": "PLTR",
+        "chg": "-1.71%",
+        "status": "is-down",
+        "aiFocus": "AIP (OS)",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "SaaS",
+        "name": "SERVICENOW",
+        "kName": "서비스나우",
+        "ticker": "NOW",
+        "chg": "-0.67%",
+        "status": "is-down",
+        "aiFocus": "GenAI Workflow",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Data",
+        "name": "SNOWFLAKE",
+        "kName": "스노우플레이크",
+        "ticker": "SNOW",
+        "chg": "-1.21%",
+        "status": "is-down",
+        "aiFocus": "Data Cloud",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Security",
+        "name": "CROWDSTRIKE",
+        "kName": "크라우드스트라이크",
+        "ticker": "CRWD",
+        "chg": "-1.44%",
+        "status": "is-down",
+        "aiFocus": "Falcon AI",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Database",
+        "name": "MONGODB",
+        "kName": "몽고DB",
+        "ticker": "MDB",
+        "chg": "-0.37%",
+        "status": "is-down",
+        "aiFocus": "Vector Search",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Observability",
+        "name": "DATADOG",
+        "kName": "데이터독",
+        "ticker": "DDOG",
+        "chg": "-1.08%",
+        "status": "is-down",
+        "aiFocus": "LLM Monitor",
+        "reason": "연말 포지션 정리"
+      }
+    ],
+    "power": [
+      {
+        "category": "Cooling",
+        "name": "VERTIV",
+        "kName": "버티브",
+        "ticker": "VRT",
+        "chg": "-1.42%",
+        "status": "is-down",
+        "aiFocus": "Liquid Cooling",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Nuclear",
+        "name": "CONSTELLATION",
+        "kName": "컨스텔레이션",
+        "ticker": "CEG",
+        "chg": "-1.08%",
+        "status": "is-down",
+        "aiFocus": "Clean Energy",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Grid",
+        "name": "EATON",
+        "kName": "이튼",
+        "ticker": "ETN",
+        "chg": "-0.73%",
+        "status": "is-down",
+        "aiFocus": "Power Grid",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "Grid",
+        "name": "GE VERNOVA",
+        "kName": "GE 버노바",
+        "ticker": "GEV",
+        "chg": "-0.92%",
+        "status": "is-down",
+        "aiFocus": "Grid / Turbine",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "HVAC",
+        "name": "JOHNSON CONTROLS",
+        "kName": "존슨콘트롤즈",
+        "ticker": "JCI",
+        "chg": "-0.98%",
+        "status": "is-down",
+        "aiFocus": "Cooling Systems",
+        "reason": "연말 포지션 정리"
+      },
+      {
+        "category": "HVAC",
+        "name": "TRANE",
+        "kName": "트레인",
+        "ticker": "TT",
+        "chg": "-0.64%",
+        "status": "is-down",
+        "aiFocus": "Thermal Mgmt",
+        "reason": "연말 포지션 정리"
+      }
+    ]
+  },
+  "otherMovers": [
+    {
+      "category": "Consumer",
+      "name": "NIKE",
+      "kName": "나이키",
+      "ticker": "NKE",
+      "chg": "+4.10%",
+      "status": "is-up",
+      "trend": "BREAKOUT",
+      "koreaThemes": [
+        "스포츠웨어",
+        "소비재",
+        "브랜드"
+      ],
+      "koreaLeaders": [
+        "F&F",
+        "휠라홀딩스",
+        "코오롱인더"
+      ],
+      "reason": "CEO 자사주 매입 소식에 투자심리 개선."
+    },
+    {
+      "category": "Crypto",
+      "name": "TRUMP MEDIA",
+      "kName": "트럼프 미디어",
+      "ticker": "DJT",
+      "chg": "+5.30%",
+      "status": "is-up",
+      "trend": "MOMENTUM",
+      "koreaThemes": [
+        "디지털자산",
+        "토큰",
+        "거래소"
+      ],
+      "koreaLeaders": [
+        "우리기술투자",
+        "한화투자증권",
+        "갤럭시아머니트리",
+        "비덴트"
+      ],
+      "reason": "Crypto.com과 토큰 에어드롭 계획 발표."
+    },
+    {
+      "category": "Biotech",
+      "name": "VANDA",
+      "kName": "반다 파마",
+      "ticker": "VNDA",
+      "chg": "+25.00%",
+      "status": "is-up",
+      "trend": "SPIKE",
+      "koreaThemes": [
+        "바이오",
+        "신약 승인"
+      ],
+      "koreaLeaders": [
+        "한미약품",
+        "유한양행",
+        "HK이노엔"
+      ],
+      "reason": "FDA 승인 소식으로 급등."
+    },
+    {
+      "category": "Biotech",
+      "name": "CORCEPT",
+      "kName": "코르셉트",
+      "ticker": "CORT",
+      "chg": "-50.00%",
+      "status": "is-down",
+      "trend": "BREAKDOWN",
+      "koreaThemes": [
+        "바이오",
+        "임상 리스크"
+      ],
+      "koreaLeaders": [
+        "한미약품",
+        "유한양행",
+        "HK이노엔"
+      ],
+      "reason": "FDA 추가 데이터 요구로 승인 지연 우려."
+    },
+    {
+      "category": "Metals",
+      "name": "NEWMONT",
+      "kName": "뉴몬트",
+      "ticker": "NEM",
+      "chg": "-2.00%",
+      "status": "is-down",
+      "trend": "WEAK",
+      "koreaThemes": [
+        "금속/광산",
+        "금 가격"
+      ],
+      "koreaLeaders": [
+        "고려아연",
+        "풍산"
+      ],
+      "reason": "금·은 급락 여파로 금광주 약세."
+    },
+    {
+      "category": "Metals",
+      "name": "HECLA",
+      "kName": "헤클라 마이닝",
+      "ticker": "HL",
+      "chg": "-1.50%",
+      "status": "is-down",
+      "trend": "WEAK",
+      "koreaThemes": [
+        "은 가격",
+        "귀금속"
+      ],
+      "koreaLeaders": [
+        "고려아연",
+        "LS"
+      ],
+      "reason": "은 가격 급락과 마진 상향 영향."
+    }
+  ],
+  "dstStatus": "OFF (Standard Time)",
+  "timeline": [
+    {
+      "timeEST": "04:00 ~ 09:30",
+      "timeKST": "18:00 ~ 23:30",
+      "session": "PRE",
+      "event": "THIN FUTURES",
+      "vol": "LOW",
+      "status": "STABLE",
+      "desc": "휴장 전 유동성 감소로 선물 거래 둔화.",
+      "impact": "neutral"
+    },
+    {
+      "timeEST": "09:30 ~ 11:30",
+      "timeKST": "23:30 ~ 01:30",
+      "session": "REG",
+      "event": "YEAR-END SELLING",
+      "vol": "LOW",
+      "status": "ACTIVE",
+      "desc": "연말 포지션 정리 매물 유입으로 지수 약세 출발.",
+      "impact": "down"
+    },
+    {
+      "timeEST": "11:30 ~ 14:30",
+      "timeKST": "01:30 ~ 04:30",
+      "session": "REG",
+      "event": "METALS SLIDE",
+      "vol": "MED",
+      "status": "VOLATILE",
+      "desc": "귀금속 급락과 소재주 약세가 부담으로 작용.",
+      "impact": "down"
+    },
+    {
+      "timeEST": "14:30 ~ 16:00",
+      "timeKST": "04:30 ~ 06:00",
+      "session": "REG",
+      "event": "NO WINDOW DRESSING",
+      "vol": "MED",
+      "status": "TRENDING",
+      "desc": "산타 랠리 부재 속 동반 하락 마감.",
+      "impact": "down"
+    },
+    {
+      "timeEST": "16:00 ~ 18:00",
+      "timeKST": "06:00 ~ 08:00",
+      "session": "AFTER",
+      "event": "HOLIDAY CLOSE",
+      "vol": "LOW",
+      "status": "STABLE",
+      "desc": "신정 휴장 앞둔 관망세 유지.",
+      "impact": "neutral"
+    },
+    {
+      "timeEST": "18:00 ~ 18:30",
+      "timeKST": "08:00 ~ 08:30",
+      "session": "FINAL",
+      "event": "INTELLIGENCE SYNC",
+      "vol": "LOW",
+      "status": "SYNCED",
+      "desc": "미국 종가 확정 및 연초 일정 점검.",
+      "impact": "neutral"
+    }
+  ],
+  "events": [
+    {
+      "date": "01.01",
+      "day": "THU",
+      "title": "미국 증시 휴장 (신정)",
+      "type": "Holiday",
+      "impact": "low",
+      "tier": "CALENDAR",
+      "note": "신정 휴장으로 거래 없음."
+    },
+    {
+      "date": "01.02",
+      "day": "FRI",
+      "title": "미국 12월 S&P 글로벌 제조업 PMI",
+      "type": "Indicator",
+      "impact": "high",
+      "tier": "MACRO",
+      "note": "연초 경기 체감 지표 확인."
+    }
+  ],
+  "finalAction": "연말 저유동성 구간에서 변동성이 커졌습니다. 연초 유동성 복귀 전까지는 포지션 사이즈를 조절하고, 귀금속·테크 변동성에 대비하십시오.",
+  "finalDecision": "HOLD",
+  "threatLevel": "MID",
+  "marketBias": "NEUTRAL_TO_DEFENSIVE",
+  "commodities": [
+    {
+      "name": "GOLD (금)",
+      "ticker": "XAUUSD",
+      "spot": "4,332.10",
+      "spotChg": "-0.87%",
+      "fut": null,
+      "futChg": null,
+      "reason": "증거금 인상 여파로 조정"
+    },
+    {
+      "name": "SILVER (은)",
+      "ticker": "XAGUSD",
+      "spot": "70.98",
+      "spotChg": "-8.26%",
+      "fut": null,
+      "futChg": null,
+      "reason": "급락 후 변동성 확대"
+    },
+    {
+      "name": "COPPER (구리)",
+      "ticker": "XCUUSD",
+      "spot": "5.69",
+      "spotChg": "-0.58%",
+      "fut": null,
+      "futChg": null,
+      "reason": "경기 둔화 우려"
+    },
+    {
+      "name": "WTI CRUDE (원유)",
+      "ticker": "WTI",
+      "spot": "57.41",
+      "spotChg": "-0.93%",
+      "fut": null,
+      "futChg": null,
+      "reason": "연말 수요 둔화"
+    },
+    {
+      "name": "NATURAL GAS (천연가스)",
+      "ticker": "NG",
+      "spot": "3.71",
+      "spotChg": "-6.57%",
+      "fut": null,
+      "futChg": null,
+      "reason": "재고 개선·수요 둔화"
+    },
+    {
+      "name": "SOYBEANS (대두)",
+      "ticker": "SOYB",
+      "spot": "1,047.25",
+      "spotChg": "+0.10%",
+      "fut": null,
+      "futChg": null,
+      "reason": "곡물 약세"
+    },
+    {
+      "name": "WHEAT (밀)",
+      "ticker": "WHEAT",
+      "spot": "506.50",
+      "spotChg": "-0.83%",
+      "fut": null,
+      "futChg": null,
+      "reason": "작황·수요 둔화"
+    },
+    {
+      "name": "CORN (옥수수)",
+      "ticker": "CORN",
+      "spot": "441.00",
+      "spotChg": "+0.11%",
+      "fut": null,
+      "futChg": null,
+      "reason": "재고 부담"
+    },
+    {
+      "name": "RBOB GAS (휘발유)",
+      "ticker": "RBOB",
+      "spot": "1.728",
+      "spotChg": "+0.41%",
+      "fut": null,
+      "futChg": null,
+      "reason": "정제마진 견조"
+    },
+    {
+      "name": "ULSD HO (난방유)",
+      "ticker": "ULSD",
+      "spot": "2.15",
+      "spotChg": "-0.03%",
+      "fut": null,
+      "futChg": null,
+      "reason": "난방유 보합권"
+    }
+  ],
+  "crypto": [
+    {
+      "name": "BITCOIN (비트코인)",
+      "ticker": "BTC",
+      "spot": "87,629.77",
+      "spotChg": "-0.91%",
+      "dominance": "54.2",
+      "dominanceChg": "+0.5%",
+      "headline": "연말 변동성 속 완만한 반등"
+    },
+    {
+      "name": "ETHEREUM (이더리움)",
+      "ticker": "ETH",
+      "spot": "2,975.66",
+      "spotChg": "+0.14%",
+      "dominance": "18.5",
+      "dominanceChg": "-0.2%",
+      "headline": "ETF 승인 대기 · 스테이킹 증가"
+    },
+    {
+      "name": "RIPPLE (리플)",
+      "ticker": "XRP",
+      "spot": "1.84",
+      "spotChg": "-1.96%",
+      "dominance": "4.2",
+      "dominanceChg": "+0.3%",
+      "headline": "규제 완화 기대"
+    },
+    {
+      "name": "SOLANA (솔라나)",
+      "ticker": "SOL",
+      "spot": "124.15",
+      "spotChg": "-0.63%",
+      "dominance": "3.1",
+      "dominanceChg": "+0.1%"
+    },
+    {
+      "name": "TETHER (테더)",
+      "ticker": "USDT",
+      "spot": "1.00",
+      "spotChg": "-0.05%",
+      "dominance": "5.8",
+      "dominanceChg": "0.0%"
+    },
+    {
+      "name": "CIRCLE (써클)",
+      "ticker": "USDC",
+      "spot": "1.00",
+      "spotChg": "-0.01%",
+      "dominance": "1.2",
+      "dominanceChg": "0.0%"
+    }
+  ]
+};
+
+// [SECTION 3: UI COMPONENTS]
+const CornerBrackets = () => (
+  <>
+    <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#444] pointer-events-none" />
+    <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#444] pointer-events-none" />
+    <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#444] pointer-events-none" />
+    <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#444] pointer-events-none" />
+  </>
+);
+
+const FlagKR = ({ className = "" }) => (
+  <svg viewBox="0 0 24 16" className={className} aria-hidden="true">
+    <rect width="24" height="16" rx="1.5" fill="#ffffff" />
+    <path d="M8.5 8A3.5 3.5 0 0 0 15.5 8L8.5 8Z" fill="#CD2E3A" />
+    <path d="M8.5 8A3.5 3.5 0 0 1 15.5 8L8.5 8Z" fill="#0047A0" />
+    <rect x="3" y="2" width="4" height="0.7" fill="#111111" />
+    <rect x="3" y="3.7" width="4" height="0.7" fill="#111111" />
+    <rect x="3" y="5.4" width="4" height="0.7" fill="#111111" />
+    <rect x="17" y="10" width="4" height="0.7" fill="#111111" />
+    <rect x="17" y="11.7" width="4" height="0.7" fill="#111111" />
+    <rect x="17" y="13.4" width="4" height="0.7" fill="#111111" />
+    <rect x="17" y="2" width="1.6" height="0.7" fill="#111111" />
+    <rect x="19.4" y="2" width="1.6" height="0.7" fill="#111111" />
+    <rect x="17" y="3.7" width="4" height="0.7" fill="#111111" />
+    <rect x="17" y="5.4" width="1.6" height="0.7" fill="#111111" />
+    <rect x="19.4" y="5.4" width="1.6" height="0.7" fill="#111111" />
+    <rect x="3" y="10" width="1.6" height="0.7" fill="#111111" />
+    <rect x="5.4" y="10" width="1.6" height="0.7" fill="#111111" />
+    <rect x="3" y="11.7" width="4" height="0.7" fill="#111111" />
+    <rect x="3" y="13.4" width="1.6" height="0.7" fill="#111111" />
+    <rect x="5.4" y="13.4" width="1.6" height="0.7" fill="#111111" />
+  </svg>
+);
+
+const FlagUS = ({ className = "" }) => (
+  <svg viewBox="0 0 24 16" className={className} aria-hidden="true">
+    <rect width="24" height="16" rx="1.5" fill="#ffffff" />
+    <rect y="0" width="24" height="2" fill="#B22234" />
+    <rect y="4" width="24" height="2" fill="#B22234" />
+    <rect y="8" width="24" height="2" fill="#B22234" />
+    <rect y="12" width="24" height="2" fill="#B22234" />
+    <rect y="14" width="24" height="2" fill="#B22234" />
+    <rect width="10" height="7" fill="#3C3B6E" />
+    <circle cx="2" cy="1.5" r="0.6" fill="#ffffff" />
+    <circle cx="4.5" cy="1.5" r="0.6" fill="#ffffff" />
+    <circle cx="7" cy="1.5" r="0.6" fill="#ffffff" />
+    <circle cx="3.2" cy="3.2" r="0.6" fill="#ffffff" />
+    <circle cx="5.7" cy="3.2" r="0.6" fill="#ffffff" />
+    <circle cx="8.2" cy="3.2" r="0.6" fill="#ffffff" />
+    <circle cx="2" cy="4.9" r="0.6" fill="#ffffff" />
+    <circle cx="4.5" cy="4.9" r="0.6" fill="#ffffff" />
+    <circle cx="7" cy="4.9" r="0.6" fill="#ffffff" />
+  </svg>
+);
+
+const SectionHeader = ({ title, isOpenDefault = false, variant = "default", icon = null, children }) => {
+  const bgStyles = { default: "bg-[#0b0e11]", insight: "bg-[#0c0f16]", strategy: "bg-[#15120e]" };
+  const summaryBg = { default: "", insight: "", strategy: "bg-[#1b140c]" };
+  const summaryHover = { default: "hover:bg-[#151515]", insight: "hover:bg-[#151515]", strategy: "hover:bg-[#221a0f]" };
+  return (
+    <details open={isOpenDefault} className={`mb-6 border border-[#333] ${bgStyles[variant]} group overflow-hidden`}>
+      <summary className={`flex items-center gap-2.5 p-3.5 font-bold cursor-pointer list-none text-[#ff9d00] ${summaryBg[variant]} ${summaryHover[variant]} transition-colors select-none`}>
+        <span className="text-[10px] text-[#999] group-open:rotate-90 transition-transform font-mono">▶</span>
+        <span className="flex items-center gap-2 font-['Space_Grotesk'] text-[13px] tracking-wider uppercase">
+          {icon && <span className="inline-flex items-center shrink-0">{icon}</span>}
+          {title}
+        </span>
+      </summary>
+      <div className="p-4 border-t border-[#333] animate-in fade-in slide-in-from-top-1 duration-200">{children}</div>
+    </details>
+  );
+};
+
+const Sparkline = ({ data, color, width = 50, height = 18 }) => {
+  if (!data || data.length < 2) return null;
+
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+
+  const points = data.map((val, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((val - min) / range) * height;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} className="inline-block" style={{ verticalAlign: 'middle' }}>
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.8"
+      />
+    </svg>
+  );
+};
+
+const IndexCard = ({ item, theme = "default" }) => {
+  const isAsset = theme === "asset";
+  const parsePct = (chgStr = "") => {
+    const numStr = String(chgStr).replace('%', '').replace('+', '').trim();
+    const val = parseFloat(numStr);
+    return isNaN(val) ? null : val;
+  };
+  // Commodities: 기본은 회색, 의미 있는 등락(절대 1.5% 이상)만 컬러
+  const getCommodityDirection = (chgStr) => {
+    const val = parsePct(chgStr);
+    if (val === null) return 'flat';
+    const abs = Math.abs(val);
+    if (abs < 1.5) return 'flat';
+    return val > 0 ? 'up' : 'down';
+  };
+
+  const dir = isAsset ? getCommodityDirection(item.spotChg) : getDirection(item.spotChg);
+  const isUp = dir === 'up';
+  const isDown = dir === 'down';
+  const highlightReason = isAsset && item.reason && /폭락|급등|폭등|역대급|record|historic|all[-\s]?time|붕괴|슬럼프|crash|collapse|plunge|spike|surge|shock|supply|shortage|deficit|재고|비축|갈등|제재|전쟁|침공|타격|셧다운|파업|중단|재개|라니냐|엘니뇨|한파|폭염|허리케인|사이클론|수요\s*급감|수요\s*폭증|demand\s*surge|demand\s*drop|geopolitical|strike|sanction|sabotage|pipeline|blockade/i.test(item.reason);
+
+  // Enhanced backgrounds with gradients
+  const bgGradient = isUp
+    ? 'bg-gradient-to-br from-[#001a00] via-[#0a0a0a] to-[#0a0a0a]'
+    : isDown
+    ? 'bg-gradient-to-br from-[#1a0000] via-[#0a0a0a] to-[#0a0a0a]'
+    : 'bg-gradient-to-br from-[#0d0d0d] via-[#0a0a0a] to-[#080808]';
+
+  const borderColor = isUp
+    ? 'border-[#00ff00]/30 hover:border-[#00ff00]/60'
+    : isDown
+    ? 'border-[#FF073A]/30 hover:border-[#FF073A]/60'
+    : 'border-[#333] hover:border-[#555]';
+
+  const glowColor = isUp
+    ? 'shadow-[0_0_20px_rgba(0,255,0,0.1)] hover:shadow-[0_0_30px_rgba(0,255,0,0.2)]'
+    : isDown
+    ? 'shadow-[0_0_20px_rgba(255,7,58,0.1)] hover:shadow-[0_0_30px_rgba(255,7,58,0.2)]'
+    : 'shadow-[0_0_10px_rgba(255,157,0,0.05)] hover:shadow-[0_0_20px_rgba(255,157,0,0.1)]';
+
+  // Highlight these specific key tickers
+  const isHero = ['DJI', 'NDX', 'SPX', 'SOX', 'VIX'].includes(item.ticker);
+
+  const headline = item.headline || item.news || (theme === "asset" ? item.reason : null);
+
+  return (
+    <div className={`${bgGradient} relative p-4 border ${borderColor} ${glowColor} transition-all duration-300 flex flex-col justify-between min-h-[120px] group/card h-full overflow-hidden hover:scale-[1.02] hover:-translate-y-0.5`}>
+      {/* Animated scanline effect */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,#fff_2px,#fff_4px)]"></div>
+
+      {/* Top Accent Band - Enhanced */}
+      <div className={`absolute top-0 left-0 w-full h-1 ${isUp ? 'bg-gradient-to-r from-transparent via-[#00ff00] to-transparent' : isDown ? 'bg-gradient-to-r from-transparent via-[#FF073A] to-transparent' : 'bg-gradient-to-r from-transparent via-[#ff9d00] to-transparent'} opacity-60 group-hover/card:opacity-100 transition-opacity`}></div>
+
+      {/* Corner glow effect */}
+      <div className={`absolute top-0 right-0 w-20 h-20 ${isUp ? 'bg-[#00ff00]/5' : isDown ? 'bg-[#FF073A]/5' : 'bg-[#ff9d00]/5'} blur-2xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500`}></div>
+
+      <CornerBrackets />
+
+      <div className="flex justify-between items-start mb-3 relative z-10">
+      <div className="flex items-center gap-2.5">
+          <div className={`p-1.5 rounded ${isUp ? 'bg-[#00ff00]/10' : isDown ? 'bg-[#FF073A]/10' : 'bg-[#333]/30'}`}>
+            {isUp ? <TrendingUp className="w-4 h-4 text-[#00ff00] drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]" /> :
+             isDown ? <TrendingDown className="w-4 h-4 text-[#FF073A] drop-shadow-[0_0_8px_rgba(255,7,58,0.8)]" /> :
+             <Activity className="w-4 h-4 text-[#666]" />}
+          </div>
+          <div className="flex flex-col">
+            <div className="grid grid-cols-[1fr_auto] items-start w-full gap-3 relative">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`${isAsset ? "text-[20px]" : "text-[20px]"} text-white font-black leading-[1.2] font-bloomberg uppercase tracking-wide whitespace-nowrap`}>{item.name}</span>
+                {item.trend && (
+                  <div className={`px-2 py-0.5 rounded ${isUp ? 'bg-[#00ff00]/10' : isDown ? 'bg-[#FF073A]/10' : 'bg-[#333]/20'}`}>
+                    <Sparkline
+                      data={item.trend}
+                      color={isUp ? '#00ff00' : isDown ? '#FF073A' : '#888'}
+                      width={95}
+                      height={20}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {theme === "asset" && headline && (
+        <div className="absolute top-4 right-3 z-20">
+          <span className="inline-flex items-center text-[15px] leading-tight px-3.5 py-1.5 rounded-sm font-semibold tracking-tight whitespace-nowrap bg-[#1c1c1c] border border-[#777] text-white shadow-[inset_0_0_12px_rgba(160,160,180,0.35),_0_3px_12px_rgba(0,0,0,0.35)]">
+            {headline}
+          </span>
+        </div>
+      )}
+
+      <div className="space-y-2 font-['JetBrains_Mono'] relative z-10 text-[13px]">
+        <div className={`flex justify-between items-center ${isUp ? 'bg-[#00ff00]/5' : isDown ? 'bg-[#FF073A]/5' : 'bg-[#111]/60'} px-2.5 py-2 rounded border ${isUp ? 'border-[#00ff00]/20' : isDown ? 'border-[#FF073A]/20' : 'border-[#222]'} font-bold backdrop-blur-sm`}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-[#666] font-black tracking-wider uppercase">SPOT</span>
+            <span className="text-[13px] text-[#aaa] font-black tracking-wide">[{item.ticker}]</span>
+            {!(item.fut || item.futChg) && (
+              <span className="text-[9px] text-[#888] font-black tracking-wider uppercase border border-[#444] px-1 py-0.5 rounded">SPOT ONLY</span>
+            )}
+          </div>
+          <div className="flex gap-3 items-center">
+            <span className={`text-[20px] font-black tracking-tight ${isUp ? 'text-[#00ff00]' : isDown ? 'text-[#FF073A]' : 'text-white'}`}>{item.spot}</span>
+            <span className={`font-black text-[16px] px-2.5 py-1 rounded border ${isUp ? 'bg-[#00ff00]/20 border-[#00ff00]/50 text-[#00ff00] shadow-[0_0_15px_rgba(0,255,0,0.3)] animate-pulse' : isDown ? 'bg-[#FF073A]/20 border-[#FF073A]/50 text-[#FF073A] shadow-[0_0_15px_rgba(255,7,58,0.3)] animate-pulse' : 'bg-[#333]/40 border-[#444] text-[#888]'}`}>
+              {item.spotChg}
+            </span>
+          </div>
+        </div>
+        {item.dominance && (
+          <div className="flex justify-between items-center border border-dashed border-[#222] px-2.5 py-1.5 rounded font-bold bg-[#0a0a0a]/40 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-[#ff9d00]/70 font-black tracking-wider uppercase">DOMINANCE</span>
+            </div>
+            <div className="flex gap-3 items-center">
+              <span className="text-[#ccc] tracking-tight text-[14px]">{item.dominance}%</span>
+              {item.dominanceChg && (
+                <span className={`font-black text-[13px] ${getColorClass(item.dominanceChg)}`}>{item.dominanceChg}</span>
+              )}
+            </div>
+          </div>
+        )}
+        {item.fut && (
+          <div className="flex justify-between items-center border border-dashed border-[#222] px-2.5 py-1.5 rounded font-bold bg-[#0a0a0a]/40 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-[#ff9d00]/70 font-black tracking-wider uppercase">FUTURES</span>
+              <span className="text-[13px] text-[#aaa] font-black tracking-wide">[{item.futTicker || item.ticker}]</span>
+            </div>
+            <div className="flex gap-3 items-center">
+              <span className="text-[#ccc] tracking-tight text-[16px]">{item.fut}</span>
+              <span className={`font-black text-[15px] ${getColorClass(item.futChg)}`}>{item.futChg}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DataCard = ({ label, val, statusClass, layout, chipTheme, chipLayout, meta, sub, ohlc, metrics, metricCols, borderClass, hoverBorderClass, metricBorderClass, metricGlowClass }) => {
+  const isUp = statusClass === 'up';
+  const isDown = statusClass === 'down';
+  // Value color: High contrast neon for readability against dark bg
+  const valColorClass = isUp ? 'text-[#00ff00] drop-shadow-[0_0_5px_rgba(0,255,0,0.5)]' : isDown ? 'text-[#FF073A] drop-shadow-[0_0_5px_rgba(255,7,58,0.5)]' : 'text-white';
+  const baseBorderClass = borderClass || 'border-[#333]/50';
+  const hoverBorder = hoverBorderClass || 'hover:border-[#ff9d00]/50';
+  const cardMinHeight = layout === 'ohlc' ? 'min-h-[104px]' : layout === 'metrics' ? 'min-h-[96px]' : 'min-h-[90px]';
+  const chipToneClass = isUp ? 'border-[#00ff00]/35 text-[#caffca] bg-[#0b160d]/70' : isDown ? 'border-[#ff7a8a]/35 text-[#ffd1d6] bg-[#1a0b0e]/70' : 'border-[#333] text-[#ddd] bg-[#0b0b0b]/80';
+  const chipThemeClass = chipTheme ? DOMESTIC_CHIP_THEMES[chipTheme] : null;
+  const chipClass = chipThemeClass || chipToneClass;
+  const chips = layout === 'chips' ? splitDomesticChips(val) : [];
+  const metricItems = layout === 'metrics' && Array.isArray(metrics) ? metrics : [];
+  const metricColsCount = metricCols === 3 ? 3 : 2;
+  const metricRowsCount = metricItems.length > metricColsCount ? 2 : 1;
+  const metricGridBase = metricColsCount === 3
+    ? metricRowsCount === 2 ? 'grid-cols-3 grid-rows-2' : 'grid-cols-3 grid-rows-1'
+    : metricRowsCount === 2 ? 'grid-cols-2 grid-rows-2' : 'grid-cols-2 grid-rows-1';
+  const metricHighlight = Boolean(metricBorderClass);
+  const metricGridClass = `${metricGridBase}${metricHighlight ? ' gap-2 p-2' : ''}`;
+  const metricLabelClass = "text-[10px] md:text-[11px] text-[#777] font-bold tracking-tight";
+  const metricValueClass = "text-[15px] md:text-[16px] font-['Space_Grotesk'] font-black tracking-tight leading-none whitespace-nowrap";
+  const chipContainerClass = chipLayout === 'grid'
+    ? 'grid grid-cols-3 gap-2'
+    : 'flex flex-wrap gap-2';
+  const chipItemClass = chipLayout === 'grid'
+    ? 'w-full text-center min-h-[30px] flex items-center justify-center whitespace-nowrap truncate'
+    : '';
+  const plainLines = layout === 'chips' || layout === 'metrics' || layout === 'center' ? [] : splitDomesticPlain(val);
+  const isSplit = plainLines.length > 1;
+  const plainAlignClass = 'items-start';
+  const closeDelta = layout === 'ohlc' ? getOhlcChangePct(ohlc, val) : null;
+  const closeDeltaText = closeDelta ? `(${closeDelta})` : null;
+  const closeDeltaClass = closeDelta ? getColorClass(closeDelta) : "text-[#666]";
+  const centerParts = layout === 'center' ? splitCenterValue(val) : null;
+  const centerDeltaClass = centerParts && centerParts.delta ? getColorClass(centerParts.delta) : "text-[#666]";
+  const centerArrow = isUp ? "▲" : isDown ? "▼" : "■";
+  const centerArrowClass = isUp ? "text-[#00ff00]" : isDown ? "text-[#FF073A]" : "text-[#666]";
+  const ohlcValueBaseClass = "text-[16px] md:text-[17px] font-['Space_Grotesk'] font-black tracking-tight leading-none whitespace-nowrap";
+  const ohlcLabelClass = "text-[11px] md:text-[12px] text-[#777] font-bold tracking-tight";
+  const ohlcItems = layout === 'ohlc' ? [
+    { key: "open", label: "시가", value: ohlc && ohlc.open ? ohlc.open : "-", colorClass: "text-[#9a9a9a]" },
+    { key: "low", label: "저가", value: ohlc && ohlc.low ? ohlc.low : "-", colorClass: "text-[#FF073A]" },
+    { key: "high", label: "고가", value: ohlc && ohlc.high ? ohlc.high : "-", colorClass: "text-[#00ff00]" },
+    { key: "close", label: "종가", value: ohlc && ohlc.close ? ohlc.close : "-", colorClass: "text-[#ff9d00]" }
+  ] : [];
+  const getMetricColorClass = (metric) => {
+    if (metric.colorClass) return metric.colorClass;
+    if (metric.delta) return getColorClass(metric.delta);
+    if (metric.tone === 'up') return 'text-[#00ff00]';
+    if (metric.tone === 'down') return 'text-[#FF073A]';
+    if (metric.tone === 'flat') return 'text-[#666]';
+    return 'text-[#ddd]';
+  };
+  
+  return (
+    <div className={`relative bg-[#080a0b] p-0 border ${baseBorderClass} ${hoverBorder} transition-all flex flex-col justify-between ${cardMinHeight} group/datagrid overflow-hidden`}>
+      {/* Background Decor */}
+      <div className="absolute inset-0 bg-grid-overlay opacity-[0.05] pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-bl from-[#ff9d00]/10 to-transparent opacity-0 group-hover/datagrid:opacity-100 transition-opacity"></div>
+      
+      {/* Label Area: 'Read Less' Style (Dark bg, Muted Amber text) */}
+      <div className="bg-[#111] border-b border-[#222] px-3 py-2 flex justify-between items-center relative z-10">
+        <div className="flex items-center gap-2">
+           <div className="w-1 h-3 bg-[#ff9d00]/50"></div>
+           <span className="text-[12px] font-['JetBrains_Mono'] font-bold text-[#bfa15f] tracking-wider uppercase opacity-80">{label}</span>
+        </div>
+        <div className="opacity-30 group-hover/datagrid:opacity-100 transition-opacity">
+           {isUp ? <TrendingUp className="w-3 h-3 text-[#00ff00]" /> : 
+            isDown ? <TrendingDown className="w-3 h-3 text-[#FF073A]" /> : 
+            <Activity className="w-3 h-3 text-[#555]" />}
+        </div>
+      </div>
+
+      {/* Value Area: High Visibility */}
+      {layout === 'ohlc' ? (
+        <div className="grid grid-cols-2 grid-rows-2 relative z-10 h-full text-center">
+          {ohlcItems.map((item, idx) => {
+            const cellBorder = `${idx < 2 ? 'border-b border-[#222]' : ''} ${idx % 2 === 0 ? 'border-r border-[#222]' : ''}`;
+            const isClose = item.key === "close";
+            return (
+              <div key={`${item.label}-${idx}`} className={`flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 ${cellBorder}`}>
+                <span className={`${ohlcLabelClass} w-full text-left`}>{item.label}</span>
+                {isClose && closeDeltaText ? (
+                  <div className="flex items-baseline justify-center gap-1 whitespace-nowrap">
+                    <span className={`${ohlcValueBaseClass} ${item.colorClass} drop-shadow-[0_0_8px_rgba(255,157,0,0.55)]`}>{item.value}</span>
+                    <span className={`text-[13px] md:text-[14px] font-black ${closeDeltaClass}`}>{closeDeltaText}</span>
+                  </div>
+                ) : (
+                  <span className={`${ohlcValueBaseClass} ${item.colorClass}`}>{item.value}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : layout === 'center' ? (
+        <div className="flex items-center justify-center relative z-10 h-full px-3 text-center">
+          <div className="flex items-baseline justify-center gap-2 whitespace-nowrap">
+            <span className={`text-[14px] md:text-[15px] font-black ${centerArrowClass}`}>{centerArrow}</span>
+            <span className={`text-[18px] md:text-[19px] font-['Space_Grotesk'] font-black tracking-tight leading-none ${valColorClass} whitespace-nowrap truncate`} title={val}>
+              {centerParts ? centerParts.base : val}
+            </span>
+            {centerParts && centerParts.delta && (
+              <span className={`text-[14px] md:text-[15px] font-black ${centerDeltaClass}`}>
+                ({centerParts.delta})
+              </span>
+            )}
+          </div>
+        </div>
+      ) : layout === 'metrics' ? (
+        <div className={`grid ${metricGridClass} relative z-10 h-full`}>
+          {metricItems.map((metric, idx) => {
+            const cols = metricColsCount;
+            const rows = metricRowsCount;
+            const isTopRow = idx < cols;
+            const hasRightBorder = idx % cols !== cols - 1;
+            const cellBorder = metricHighlight
+              ? `border ${metricBorderClass || 'border-[#222]'} ${metricGlowClass || ''}`
+              : `${rows > 1 && isTopRow ? 'border-b border-[#222]' : ''} ${hasRightBorder ? 'border-r border-[#222]' : ''}`;
+            return (
+              <div key={`${metric.label}-${idx}`} className={`flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 ${cellBorder} ${metricHighlight ? 'rounded-[4px] bg-[#0b1116]/60' : ''}`}>
+                <span className={`${metricLabelClass} w-full text-left`}>{metric.label}</span>
+                <span className={`${metricValueClass} ${getMetricColorClass(metric)}`}>{metric.value}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : layout === 'chips' ? (
+        <div className={`p-3 ${chipContainerClass} items-start relative z-10 h-full`}>
+          {chips.length > 0 ? (
+            chips.map((chip, i) => (
+              <span key={`${chip}-${i}`} className={`border ${chipClass} px-2.5 py-1.5 rounded-[3px] text-[12px] md:text-[13px] font-bold tracking-tight ${chipItemClass}`}>
+                {chip}
+              </span>
+            ))
+          ) : (
+            <span className="text-[12px] font-bold text-[#666]">-</span>
+          )}
+          {/* Technical Decoration in corner */}
+          <div className="absolute bottom-3 right-3 flex gap-0.5 opacity-20 group-hover/datagrid:opacity-50 transition-opacity">
+            <div className="w-0.5 h-0.5 bg-[#ff9d00]"></div>
+            <div className="w-0.5 h-0.5 bg-[#ff9d00]"></div>
+            <div className="w-0.5 h-0.5 bg-[#ff9d00]"></div>
+          </div>
+        </div>
+      ) : (
+        <div className={`p-3 flex ${plainAlignClass} justify-between relative z-10 h-full gap-8`}>
+          {isSplit ? (
+            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+              <span className={`text-[16px] md:text-[17px] font-['Space_Grotesk'] font-black tracking-tight leading-none ${valColorClass} whitespace-nowrap truncate`} title={plainLines.join(" / ")}>
+                {plainLines[0]}
+              </span>
+              <span className="text-[13px] md:text-[14px] font-bold text-[#bbb] tracking-tight leading-none whitespace-nowrap truncate" title={plainLines.join(" / ")}>
+                {plainLines[1]}
+              </span>
+              {sub && (
+                <span className="text-[11px] md:text-[12px] text-[#888] font-semibold tracking-tight">
+                  {sub}
+                </span>
+              )}
+              {meta && (
+                <span className="text-[10px] md:text-[11px] text-[#666] font-medium tracking-tight uppercase">
+                  {meta}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+              <span className={`text-[17px] font-['Space_Grotesk'] font-black tracking-tight leading-none ${valColorClass} whitespace-nowrap truncate`} title={plainLines[0]}>
+                {plainLines[0]}
+              </span>
+              {sub && (
+                <span className="text-[11px] md:text-[12px] text-[#888] font-semibold tracking-tight">
+                  {sub}
+                </span>
+              )}
+              {meta && (
+                <span className="text-[10px] md:text-[11px] text-[#666] font-medium tracking-tight uppercase">
+                  {meta}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Technical Decoration in corner */}
+          <div className="flex gap-0.5 opacity-20 group-hover/datagrid:opacity-50 transition-opacity flex-shrink-0">
+            <div className="w-0.5 h-0.5 bg-[#ff9d00]"></div>
+            <div className="w-0.5 h-0.5 bg-[#ff9d00]"></div>
+            <div className="w-0.5 h-0.5 bg-[#ff9d00]"></div>
+          </div>
+        </div>
+      )}
+      
+      {/* Animated Scanline on Hover */}
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#ff9d00]/50 to-transparent -translate-x-full group-hover/datagrid:translate-x-full transition-transform duration-1000 ease-in-out"></div>
+    </div>
+  );
+};
+
+const AI_LAYER_THEMES = {
+  compute: {
+    border: 'border-[#9aa4b2]/35',
+    hoverBorder: 'hover:border-[#9aa4b2]/70',
+    accentText: 'text-[#c0c9d6]',
+    tagBg: 'bg-[#9aa4b2]/10',
+    tagBorder: 'border-[#9aa4b2]/30',
+    focusBorder: 'border-[#9aa4b2]/25',
+    shadow: 'shadow-[inset_0_0_20px_rgba(154,164,178,0.06)]',
+    header: {
+      text: 'text-[#c0c9d6]',
+      icon: 'text-[#c0c9d6]',
+      line: 'from-[#9aa4b2]/45 via-[#9aa4b2]/15 to-transparent',
+      bg: 'bg-gradient-to-r from-[#9aa4b2]/14 via-[#9aa4b2]/6 to-transparent',
+      border: 'border-[#9aa4b2]/25',
+      glow: 'shadow-[0_0_12px_rgba(154,164,178,0.25)]'
+    }
+  },
+  systems: {
+    border: 'border-[#ff9d00]/35',
+    hoverBorder: 'hover:border-[#ff9d00]/70',
+    accentText: 'text-[#ff9d00]',
+    tagBg: 'bg-[#ff9d00]/6',
+    tagBorder: 'border-[#ff9d00]/30',
+    focusBorder: 'border-[#ff9d00]/20',
+    shadow: 'shadow-[inset_0_0_20px_rgba(255,157,0,0.05)]',
+    header: {
+      text: 'text-[#ff9d00]',
+      icon: 'text-[#ff9d00]',
+      line: 'from-[#ff9d00]/45 via-[#ff9d00]/15 to-transparent',
+      bg: 'bg-gradient-to-r from-[#ff9d00]/15 via-[#ff9d00]/6 to-transparent',
+      border: 'border-[#ff9d00]/25',
+      glow: 'shadow-[0_0_12px_rgba(255,157,0,0.25)]'
+    }
+  },
+  network: {
+    border: 'border-[#00b3ff]/35',
+    hoverBorder: 'hover:border-[#00b3ff]/70',
+    accentText: 'text-[#00b3ff]',
+    tagBg: 'bg-[#00b3ff]/8',
+    tagBorder: 'border-[#00b3ff]/30',
+    focusBorder: 'border-[#00b3ff]/25',
+    shadow: 'shadow-[inset_0_0_20px_rgba(0,179,255,0.05)]',
+    header: {
+      text: 'text-[#00b3ff]',
+      icon: 'text-[#00b3ff]',
+      line: 'from-[#00b3ff]/45 via-[#00b3ff]/15 to-transparent',
+      bg: 'bg-gradient-to-r from-[#00b3ff]/15 via-[#00b3ff]/6 to-transparent',
+      border: 'border-[#00b3ff]/25',
+      glow: 'shadow-[0_0_12px_rgba(0,179,255,0.25)]'
+    }
+  },
+  data: {
+    border: 'border-[#00ff88]/35',
+    hoverBorder: 'hover:border-[#00ff88]/70',
+    accentText: 'text-[#00ff88]',
+    tagBg: 'bg-[#00ff88]/8',
+    tagBorder: 'border-[#00ff88]/30',
+    focusBorder: 'border-[#00ff88]/25',
+    shadow: 'shadow-[inset_0_0_20px_rgba(0,255,136,0.05)]',
+    header: {
+      text: 'text-[#00ff88]',
+      icon: 'text-[#00ff88]',
+      line: 'from-[#00ff88]/45 via-[#00ff88]/15 to-transparent',
+      bg: 'bg-gradient-to-r from-[#00ff88]/15 via-[#00ff88]/6 to-transparent',
+      border: 'border-[#00ff88]/25',
+      glow: 'shadow-[0_0_12px_rgba(0,255,136,0.25)]'
+    }
+  },
+  power: {
+    border: 'border-[#ffd166]/35',
+    hoverBorder: 'hover:border-[#ffd166]/70',
+    accentText: 'text-[#ffd166]',
+    tagBg: 'bg-[#ffd166]/8',
+    tagBorder: 'border-[#ffd166]/30',
+    focusBorder: 'border-[#ffd166]/25',
+    shadow: 'shadow-[inset_0_0_20px_rgba(255,209,102,0.05)]',
+    header: {
+      text: 'text-[#ffd166]',
+      icon: 'text-[#ffd166]',
+      line: 'from-[#ffd166]/45 via-[#ffd166]/15 to-transparent',
+      bg: 'bg-gradient-to-r from-[#ffd166]/15 via-[#ffd166]/6 to-transparent',
+      border: 'border-[#ffd166]/25',
+      glow: 'shadow-[0_0_12px_rgba(255,209,102,0.25)]'
+    }
+  }
+};
+
+const TechLeaderCard = ({ m, borderCol = "border-[#333]", theme = AI_LAYER_THEMES.compute }) => {
+  const dir = statusToDirection(m.status);
+  const isUp = dir === 'up';
+  const isSamsung = /SAMSUNG/i.test(m.name) || m.ticker === "005930";
+  const baseBg = isUp ? 'bg-[#08151a]' : 'bg-[#0a0a0a]';
+  const cardBg = isSamsung ? 'bg-[#091426]' : baseBg;
+  const accentText = theme.accentText || 'text-[#ff9d00]';
+  const borderClass = theme.border || borderCol;
+  const hoverBorder = theme.hoverBorder || 'hover:border-[#ff9d00]';
+  const tagBg = theme.tagBg || 'bg-[#ff9d00]/5';
+  const tagBorder = theme.tagBorder || 'border-[#ff9d00]/20';
+  const focusBorder = theme.focusBorder || 'border-[#222]';
+  const shadowClass = theme.shadow || 'shadow-[inset_0_0_20px_rgba(255,157,0,0.02)]';
+  const samsungShadow = isSamsung ? 'shadow-[inset_0_0_40px_rgba(11,42,90,0.35)]' : '';
+  return (
+    <div className={`relative p-4 border border-dashed ${borderClass} ${hoverBorder} hover:border-solid ${cardBg} hover:bg-[#0f141a] transition-all flex flex-col justify-between h-full group/techcard ${shadowClass} ${samsungShadow}`}>
+      <CornerBrackets />
+      <div className="flex items-center gap-1 mb-1.5 relative z-10">
+        <Boxes className={`w-2.5 h-2.5 ${accentText}`} />
+        <span className={`text-[9px] font-black ${accentText} tracking-tighter uppercase font-['JetBrains_Mono']`}>{m.category}</span>
+      </div>
+      <div className="flex justify-between items-start mb-2 font-['JetBrains_Mono'] relative z-10 h-auto">
+        <div className="flex flex-col h-auto">
+          <div className="flex items-start gap-1.5 h-auto">
+            <div className="mt-0.5">{isUp ? <TrendingUp className="w-3.5 h-3.5 text-[#00ff00]" /> : <Activity className="w-3.5 h-3.5 text-[#555]" />}</div>
+            <div className="flex flex-col h-auto">
+              <span className="font-black text-[13px] text-white tracking-tight leading-tight uppercase font-['Noto_Sans_KR']">{m.name} <span className="text-[10px] text-[#777] font-medium lowercase">({m.kName})</span></span>
+              <span className={`text-[9px] font-black tracking-widest mt-1 uppercase opacity-80 ${accentText} ${tagBg} ${tagBorder} px-1.5 py-0.5 rounded-sm border w-fit`}>[{m.ticker}]</span>
+            </div>
+          </div>
+        </div>
+        <span className={`text-[13px] font-black ${getColorClass(m.chg)}`}>{m.chg}</span>
+      </div>
+      <div className={`bg-black/40 px-2 py-1 border ${focusBorder} mb-2 h-auto`}>
+        <span className="text-[8.5px] text-[#555] font-black block uppercase tracking-tighter leading-none mb-0.5">CORE_AI_FOCUS</span>
+        <span className={`text-[10px] font-bold font-['JetBrains_Mono'] uppercase tracking-tight leading-tight block ${accentText}`}>{m.aiFocus}</span>
+      </div>
+      <div className="text-[11px] text-gray-300 leading-snug font-medium font-['Space_Grotesk'] relative z-10 group-hover/techcard:text-white border-t border-[#1a1a1a] pt-[4px] break-keep whitespace-normal h-auto">
+        <span className={`${accentText} font-black mr-1`}>/</span> {m.reason}
+      </div>
+    </div>
+  );
+};
+
+const StackSubHeader = ({ icon: Icon, title, theme = AI_LAYER_THEMES.compute }) => {
+  const header = theme && theme.header ? theme.header : {};
+  const iconClass = header.icon || 'text-[#ff9d00]';
+  const textClass = header.text || 'text-[#ff9d00]';
+  const lineClass = header.line || 'from-[#ff9d00]/30 to-transparent';
+  const bgClass = header.bg || 'bg-[#ff9d00]/6';
+  const borderClass = header.border || 'border-[#ff9d00]/20';
+  const glowClass = header.glow || '';
+
+  return (
+    <div className={`flex items-center gap-3 mb-4 mt-2 px-3 py-2 rounded-md border ${bgClass} ${borderClass} ${glowClass}`}>
+      <Icon className={`w-5 h-5 ${iconClass}`} />
+      <span className={`font-['JetBrains_Mono'] font-black text-[14px] ${textClass} tracking-widest uppercase`}>{title}</span>
+      <div className={`h-px flex-1 bg-gradient-to-r ${lineClass} ml-2`} />
+    </div>
+  );
+};
+
+// Circular Gauge Component
+const CircularGauge = ({ value = 0, size = 72, strokeWidth = 8, label = '', className = '' }) => {
+  const val = Math.max(0, Math.min(100, Number(value) || 0));
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - val / 100);
+
+  const color = val >= 75 ? '#00ff00' : val >= 40 ? '#ff9d00' : '#FF073A';
+
+  return (
+    <div className={`flex flex-col items-center justify-center ${className}`} style={{ width: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <defs>
+          <filter id="gaugeGlow">
+            <feGaussianBlur stdDeviation="2" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <g transform={`translate(${size/2}, ${size/2})`}>
+          <circle r={radius} fill="none" stroke="#111" strokeWidth={strokeWidth} />
+          <circle r={radius} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
+                  strokeDasharray={`${circumference} ${circumference}`} strokeDashoffset={offset} transform={`rotate(-90)`} style={{ filter: 'url(#gaugeGlow)' }} />
+        </g>
+      </svg>
+      <div className="-mt-12 text-center">
+        <div className="text-[14px] font-black" style={{ color }}>{val.toFixed(val % 1 === 0 ? 0 : 2)}%</div>
+        {label && <div className="text-[9px] text-[#999] font-mono uppercase mt-1">{label}</div>}
+      </div>
+    </div>
+  );
+};
+
+// Horizontal Gradient Bar Component
+const HorizontalBar = ({ value = 0, width = 180, height = 12, label = '', className = '' }) => {
+  const val = Math.max(0, Math.min(100, Number(value) || 0));
+  const barWidth = typeof width === 'number' ? `${width}px` : width;
+  const barHeight = typeof height === 'number' ? `${height}px` : height;
+  // Gradient from green -> orange -> red (high->mid->low). Adjust as needed.
+  const gradient = 'linear-gradient(90deg, #00ff00 0%, #ff9d00 60%, #FF073A 100%)';
+
+  return (
+    <div className={`flex flex-col items-center ${className}`} style={{ width: barWidth }}>
+      <div className="w-full bg-[#0a0a0a] rounded-full overflow-hidden border border-[#222]" style={{ height: barHeight }}>
+        <div style={{ width: `${val}%`, height: '100%', background: gradient, transition: 'width 600ms ease' }} />
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <span className="text-[12px] font-black" style={{ color: '#fff' }}>{val % 1 === 0 ? val : val.toFixed(2)}%</span>
+        {label && <span className="text-[9px] text-[#999] font-mono uppercase">{label}</span>}
+      </div>
+    </div>
+  );
+};
+
+const M7DeepDiveRow = ({ m }) => {
+  const isUp = m.chg.includes('+');
+  const isDown = m.chg.includes('-');
+  const isFlat = !isUp && !isDown;
+  const chgClass = isUp ? 'text-[#00ff00]' : isDown ? 'text-[#FF073A]' : 'text-white';
+  const chgArrow = isUp ? '▲' : isDown ? '▼' : '-';
+  const accentClass = isUp ? 'bg-[#00ff00]' : isDown ? 'bg-[#FF073A]' : 'bg-[#555]';
+  return (
+    <div className="relative mb-5 bg-[#0d1117] border border-[#222] hover:border-[#ff9d00]/40 transition-all group/m7row overflow-hidden shadow-xl">
+      <div className="flex flex-col lg:flex-row h-auto">
+        {/* 1. 기본 정보 (로고 & 티커) - 폭 최적화 */}
+        <div className="lg:w-[240px] p-4 lg:p-5 border-b lg:border-b-0 lg:border-r border-[#222] bg-[#161b22]/40 flex items-center gap-4 flex-shrink-0">
+          <div className="w-12 h-12 lg:w-14 lg:h-14 bg-white p-2 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover/m7row:scale-105 transition-transform flex-shrink-0">
+            <img 
+              src={m.logoUrl} 
+              alt={m.name} 
+              className="w-full h-full object-contain" 
+              onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${m.name}&background=ff9d00&color=000&bold=true`; }}
+            />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[16px] lg:text-[18px] font-black text-white tracking-tighter uppercase truncate">{m.name}</span>
+            <div className="flex items-center gap-2 mt-0.5">
+               <span className="text-[10px] lg:text-[11px] text-[#ff9d00] font-mono font-black tracking-widest uppercase bg-[#ff9d00]/5 px-1.5 rounded border border-[#ff9d00]/20">[{m.ticker}]</span>
+               <span className={`text-[11px] lg:text-[12px] font-black ${chgClass}`}>
+                 <span className="mr-1">{chgArrow}</span>{m.chg}
+               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. 본문 영역 (Market Opinion & AI Strategy) - 유연한 너비 */}
+        <div className="flex-1 flex flex-col md:flex-row h-auto overflow-hidden">
+          <div className="flex-[1.4] p-4 lg:p-5 border-b md:border-b-0 md:border-r border-[#222]/50 bg-grid-orange opacity-[0.98] relative min-w-0">
+            <div className="flex items-center gap-2 mb-2 lg:mb-3 relative z-10">
+              <Terminal className="w-3 h-3 text-[#555]" />
+              <span className="text-[8px] lg:text-[9px] text-[#555] font-black uppercase tracking-[0.2em] font-mono">ANALYSIS_LOG</span>
+            </div>
+            <p className="text-[13px] lg:text-[14px] text-gray-200 font-medium leading-[1.6] break-keep relative z-10 h-auto">
+              {m.reason}
+            </p>
+          </div>
+
+          <div className="flex-1 p-4 lg:p-5 bg-[#11161d]/50 bg-grid-blue-sub relative min-w-0">
+            <div className="flex items-center gap-2 mb-2 lg:mb-3 relative z-10">
+              <Sparkles className="w-3 h-3 text-[#00b3ff]/80" />
+              <span className="text-[8px] lg:text-[9px] text-[#00b3ff]/60 font-black uppercase tracking-[0.2em] font-mono">AI_VALUE</span>
+            </div>
+            <div className="bg-black/60 border border-[#00b3ff]/30 p-2.5 lg:p-3 rounded-md relative overflow-hidden z-10">
+               <div className="absolute top-0 left-0 w-1 h-full bg-[#00b3ff]/40"></div>
+               <span className="text-[12px] lg:text-[13px] text-white font-black font-['JetBrains_Mono'] uppercase tracking-tight block ml-2 leading-tight">
+                 {m.aiFocus}
+               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. 데일리 지표 정보 (Technical & Risk) - 폭 최적화 */}
+        <div className="lg:w-[260px] p-4 lg:p-5 bg-[#0a0d12] flex flex-col justify-center gap-3 border-t lg:border-t-0 lg:border-l border-[#222] flex-shrink-0">
+          <div className="flex justify-between items-center border-b border-[#222]/50 pb-2">
+            <div className="flex items-center gap-2">
+              <Target className="w-3 h-3 text-[#444]" />
+              <span className="text-[8px] lg:text-[9px] text-[#555] font-black uppercase font-mono">Tech_Level</span>
+            </div>
+            <span className="text-[11px] lg:text-[12px] text-[#00e5ff] font-black font-mono">{m.keyLevel}</span>
+          </div>
+          <div className="flex justify-between items-center border-b border-[#222]/50 pb-2">
+             <div className="flex items-center gap-2">
+              <Bell className="w-3 h-3 text-[#444]" />
+              <span className="text-[8px] lg:text-[9px] text-[#555] font-black uppercase font-mono">Point</span>
+            </div>
+            <span className="text-[10px] lg:text-[11px] text-white font-bold break-keep text-right">{m.dailyFocus}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-[8px] lg:text-[9px] text-[#555] font-black uppercase font-mono tracking-wider">Risk</span>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(b => (
+                <div key={b} className={`w-2.5 h-1.5 lg:w-3 lg:h-2 rounded-sm ${b * 20 <= m.riskIndex ? 'bg-[#FF073A]' : 'bg-[#222]'}`}></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className={`absolute top-0 left-0 w-[3px] h-full ${accentClass} opacity-60`}></div>
+    </div>
+  );
+};
+
+const MoverFeedItem = ({ m }) => {
+  const isUp = m.chg.includes('+');
+  // Consistent dummy time based on ticker length to avoid randomness during re-renders
+  const time = `08:${40 + (m.ticker.length % 10)}:${10 + (m.name.length % 50)}`;
+  const koreaThemes = Array.isArray(m.koreaThemes) ? m.koreaThemes.filter(Boolean) : [];
+  const koreaLeaders = Array.isArray(m.koreaLeaders) ? m.koreaLeaders.filter(Boolean) : [];
+  const hasKoreaThemes = koreaThemes.length > 0;
+  const hasKoreaLeaders = koreaLeaders.length > 0;
+  const hasKoreaLinks = hasKoreaThemes || hasKoreaLeaders;
+  const koreaThemeText = koreaThemes.join(" · ");
+  const koreaLeaderText = koreaLeaders.join(" · ");
+  
+  return (
+    <div className="relative mb-6 group/mover flex gap-4 h-auto">
+      {/* Accent Node */}
+      <div className={`w-1 h-full flex-shrink-0 ${isUp ? 'bg-[#00ff00]' : 'bg-[#FF073A]'} opacity-30 group-hover/mover:opacity-100 transition-opacity`}></div>
+
+      <div className="flex-1 min-w-0">
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+            <span className="text-[15px] md:text-[16px] font-black text-[#ff9d00] font-['JetBrains_Mono'] tracking-tight bg-[#1a1208]/60 border border-[#ff9d00]/30 px-1.5 py-0.5 rounded-sm">[{m.ticker}]</span>
+            <span className="text-[16px] md:text-[17px] font-black text-white uppercase tracking-tight truncate">{m.name}</span>
+          </div>
+          <span className={`text-[14px] md:text-[15px] font-black font-mono flex-shrink-0 ${isUp ? 'text-[#00ff00]' : 'text-[#FF073A]'}`}>
+            <span className="mr-1">{isUp ? '▲' : '▼'}</span>{m.chg}
+          </span>
+        </div>
+
+        {/* Sub Meta Info */}
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-[9px] text-[#555] font-mono">[{time}]</span>
+          <span className="text-[9px] bg-white/5 text-[#777] px-1.5 py-0.5 border border-white/10 font-black uppercase tracking-widest">{m.category}</span>
+          <span className={`text-[9px] font-black tracking-widest ${isUp ? 'text-[#00ff00]/60' : 'text-[#FF073A]/60'}`}>LOG: {m.trend}</span>
+        </div>
+        {hasKoreaLinks && (
+          <div className="flex flex-wrap items-center gap-2 mb-3 text-[9px] md:text-[10px] font-semibold tracking-tight">
+            <span className="text-[#00e5ff] font-black">→</span>
+            {hasKoreaThemes && (
+              <span className="inline-flex items-center gap-1.5 text-[#bfe6ff] border border-[#00e5ff]/25 bg-[#00e5ff]/6 px-1.5 py-0.5 rounded-sm">
+                <span className="text-[#7edbff] font-black">테마/섹터</span>
+                <span className="text-[#bfe6ff] font-semibold">{koreaThemeText}</span>
+              </span>
+            )}
+            {hasKoreaLeaders && (
+              <span className="inline-flex items-center gap-1.5 text-[#ffd7a8] border border-[#ff9d00]/30 bg-[#ff9d00]/10 px-1.5 py-0.5 rounded-sm">
+                <span className="text-[#ffb347] font-black">대표종목</span>
+                <span className="text-[#ffd7a8] font-semibold">{koreaLeaderText}</span>
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Reason Text */}
+        <div className="bg-[#111] p-3 border border-white/5 group-hover/mover:border-[#333] transition-all">
+          <p className="text-[13px] text-white font-medium leading-[1.6] break-keep h-auto">
+            {m.reason}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MarketVoiceItem = ({ v }) => {
+  const name = typeof v.name === 'string' ? v.name : '';
+  const isTrump = name.includes("TRUMP");
+  const isTimiraos = /TIMIRAOS|티미라오스/i.test(name);
+  const baseSentiment = typeof v.baseSentiment === 'string' && v.baseSentiment.trim() ? v.baseSentiment.trim() : "NEUTRAL";
+  const currentStance = typeof v.currentStance === 'string' && v.currentStance.trim() ? v.currentStance.trim() : "WATCHFUL";
+  const impact = typeof v.impact === 'string' && v.impact.trim() ? v.impact.trim() : "MEDIUM";
+  const keyQuote = typeof v.keyQuote === 'string' ? v.keyQuote.trim() : "";
+  const hasQuote = Boolean(keyQuote);
+  const msg = typeof v.msg === 'string' ? v.msg.trim() : "";
+  const hasMsg = Boolean(msg);
+  const tags = Array.isArray(v._tags) ? v._tags : normalizeVoiceTags(v.tags || []);
+  const theme = isTimiraos ? VOICE_CARD_THEMES.timiraos : getVoiceCardTheme(tags);
+  const getSentimentColor = (s) => {
+    if (!s) return 'border-gray-500 text-gray-500';
+    if (s.includes('HAWKISH')) return 'border-[#FF073A] bg-[#FF073A]/10 text-[#FF073A]';
+    if (s.includes('DOVISH')) return 'border-[#00ff00] bg-[#00ff00]/10 text-[#00ff00]';
+    if (s.includes('PRO-GROWTH') || s.includes('NATIONALISM')) return 'border-[#00e5ff] bg-[#00e5ff]/10 text-[#00e5ff]';
+    return 'border-[#ff9d00] bg-[#ff9d00]/10 text-[#ff9d00]';
+  };
+
+  return (
+    <div className={`relative mb-4 md:mb-5 ${isTrump ? 'bg-[#0d1117] border-[#ff4444]/30 hover:border-[#ff4444]/60' : `${theme.cardBg} ${theme.cardBorder} ${theme.hoverBorder}`} border border-l-2 border-r-2 transition-all group/voice overflow-hidden`}>
+      <div className="flex flex-col md:flex-row h-auto">
+        {/* Speaker Meta - Trump Special Side Bar (Lighter blue) */}
+        <div className={`md:w-[240px] lg:w-[260px] px-4 py-5 md:p-5 border-b md:border-b-0 md:border-r ${isTrump ? 'border-[#222] bg-[#003366]/30' : `${theme.metaBorder} ${theme.metaBg}`} flex flex-col justify-center relative`}>
+          {isTrump && (
+            <div className="absolute top-2 left-2 flex gap-1 opacity-20">
+              <Sparkles className="w-2 h-2 text-white" />
+              <Sparkles className="w-2 h-2 text-white" />
+            </div>
+          )}
+          <div className="flex items-center gap-2 mb-1 relative z-10">
+            <div className={`w-1.5 h-3 ${isTrump ? 'bg-[#ff4444]' : theme.accent}`}></div>
+            <span className="text-[15px] md:text-[16px] lg:text-[17px] font-black text-white tracking-tighter uppercase">{v.name}</span>
+          </div>
+          <span className="text-[11px] md:text-[12px] text-[#555] font-bold font-mono uppercase tracking-widest pl-3.5 relative z-10">{v.role}</span>
+          {tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5 pl-3.5 relative z-10">
+              {tags.map((tag) => (
+                <span key={`${v.name}-${tag}`} className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm border ${getVoiceTagStyle(tag)}`}>
+                  {getVoiceTagLabel(tag)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Message Body */}
+        <div className={`flex-1 px-4 py-5 md:p-5 flex flex-col justify-center relative ${isTrump ? 'bg-[#ff0000]/5' : ''}`}>
+          {/* Dynamic Sentiment Tags & Key Quote */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] md:text-[11px] font-black px-2 py-0.5 rounded-sm border ${getSentimentColor(baseSentiment)} tracking-widest`}>
+                {baseSentiment}
+              </span>
+              <ChevronRight className="w-3 h-3 md:w-3.5 md:h-3.5 text-[#444]" />
+              <span className={`text-[10px] md:text-[11px] font-black px-2 py-0.5 rounded-sm border ${getSentimentColor(currentStance)} tracking-widest shadow-[0_0_8px_currentColor]`}>
+                {currentStance}
+              </span>
+            </div>
+            
+            <div className="h-3 w-px bg-[#333] hidden md:block"></div>
+            
+            {/* English Key Quote */}
+            {hasQuote && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#00e5ff] font-black text-[12px] md:text-[13px] opacity-50 font-mono">"</span>
+                <span className="text-[12px] md:text-[13px] font-bold text-white font-['IBM_Plex_Mono'] tracking-wider uppercase bg-white/5 px-2 py-0.5 rounded-sm border border-white/10">
+                  {keyQuote}
+                </span>
+                <span className="text-[#00e5ff] font-black text-[12px] md:text-[13px] opacity-50 font-mono">"</span>
+              </div>
+            )}
+
+            <div className="md:ml-auto flex items-center gap-2">
+               <span className="text-[9px] md:text-[10px] text-[#444] font-mono uppercase">IMPACT:</span>
+               <span className={`text-[10px] md:text-[11px] font-black ${impact === 'CRITICAL' ? 'text-[#FF073A]' : 'text-[#ff9d00]'}`}>{impact}</span>
+            </div>
+          </div>
+
+          {hasMsg && (
+            <div className="relative">
+              <p className="text-[15px] md:text-[16px] text-gray-200 font-medium leading-[1.7] break-keep italic font-['Pretendard']">
+                <span className="text-[#ff9d00] font-black mr-2 opacity-50">"</span>
+                {msg}
+                <span className="text-[#ff9d00] font-black ml-1 opacity-50">"</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Decorative Bottom Line for Trump (Red Stripes feel) */}
+      {isTrump && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#ff4444] via-white/20 to-[#ff4444] opacity-50"></div>}
+      
+      {/* General Side Bar */}
+      {!isTrump && <div className={`absolute top-0 right-0 w-1 h-full ${theme.sideBar} transition-colors`}></div>}
+    </div>
+  );
+};
+
+// [SECTION 4: MAIN APPLICATION]
+function App() {
+  const data = MARKET_DATA;
+
+  // Commodities: render in given order (2-column grid)
+  const commoditiesAll = data.commodities || [];
+  const [cryptoState, setCryptoState] = useState(data.crypto || []);
+  const [activeVoiceTags, setActiveVoiceTags] = useState([]);
+
+  const voiceData = (data.marketVoices || [])
+    .filter(hasVoiceData)
+    .map((voice) => ({
+      ...voice,
+      _tags: normalizeVoiceTags(voice.tags || [])
+    }));
+  const allVoiceTags = Array.from(
+    new Set(voiceData.flatMap((v) => v._tags || []))
+  );
+  const orderedVoiceTags = [...allVoiceTags].sort((a, b) => {
+    const aIndex = VOICE_TAG_ORDER.indexOf(a);
+    const bIndex = VOICE_TAG_ORDER.indexOf(b);
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+  const hasVoices = voiceData.length > 0;
+
+  const toggleVoiceTag = (tag) => {
+    setActiveVoiceTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const filteredVoices =
+    activeVoiceTags.length === 0
+      ? voiceData
+      : voiceData.filter((v) =>
+          (v._tags || []).some((tag) => activeVoiceTags.includes(tag))
+        );
+
+  // Helpers for API formatting
+  const formatPrice = (n) => {
+    if (n === null || n === undefined || isNaN(n)) return null;
+    if (n >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (n >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return n.toFixed(4);
+  };
+  const formatPct = (n) => {
+    if (n === null || n === undefined || isNaN(n)) return null;
+    const sign = n >= 0 ? '+' : '';
+    return `${sign}${n.toFixed(2)}%`;
+  };
+
+  const fetchCMC = async (path, params, signal) => {
+    const url = `${CMC_PROXY_LOCAL}${path}${params || ''}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error(`CMC proxy error ${res.status}`);
+    return res.json();
+  };
+
+  // Fetch live crypto (spot / 24h chg) + BTC/ETH dominance
+  useEffect(() => {
+    const symbols = Array.from(new Set((data.crypto || []).map(c => c.ticker.split('/')[0])));
+    if (!CMC_API_KEY || symbols.length === 0) return;
+
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        // Spot/24h change
+        const json = await fetchCMC('/v1/cryptocurrency/listings/latest', `?symbol=${symbols.join(',')}&convert=USD`, controller.signal);
+        const map = {};
+        json.data?.forEach(item => {
+          const sym = item.symbol;
+          const price = item.quote?.USD?.price;
+          const pct = item.quote?.USD?.percent_change_24h;
+          map[sym] = { price, pct };
+        });
+
+        // Dominance
+        let dom = {};
+        try {
+          const domJson = await fetchCMC('/v1/global-metrics/quotes/latest', '?convert=USD', controller.signal);
+          dom = {
+            BTC: domJson.data?.btc_dominance,
+            ETH: domJson.data?.eth_dominance,
+          };
+        } catch (err) {
+          console.warn('Dominance fetch failed, using static', err);
+        }
+
+        setCryptoState(prev =>
+          prev.map(c => {
+            const sym = c.ticker.split('/')[0];
+            const live = map[sym];
+            const dominance =
+              sym === 'BTC' ? dom.BTC ?? c.dominance : sym === 'ETH' ? dom.ETH ?? c.dominance : c.dominance;
+            return live
+              ? {
+                  ...c,
+                  spot: formatPrice(live.price) ?? c.spot,
+                  spotChg: formatPct(live.pct) ?? c.spotChg,
+                  dominance,
+                }
+              : { ...c, dominance };
+          })
+        );
+      } catch (err) {
+        console.warn('CMC fetch failed, using static data', err);
+      }
+    };
+
+    load();
+    return () => controller.abort();
+  }, []);
+
+  // Clean date string (remove any extra text like "(US CLOSE)")
+  const cleanDate = (dateStr) => {
+    return dateStr.replace(/\s*\(.*?\)\s*/g, '').trim();
+  };
+
+  // Get day of week from date string
+  const getDayOfWeek = (dateStr) => {
+    const cleanedDate = cleanDate(dateStr);
+    const parts = cleanedDate.split('-');
+    if (parts.length !== 3) return '';
+
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1; // 0-based
+    const day = parseInt(parts[2]);
+
+    const date = new Date(year, month, day);
+    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    return days[date.getDay()];
+  };
+
+  useEffect(() => {
+    if (window.lucide && window.lucide.createIcons) {
+      window.lucide.createIcons();
+    }
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#0b0e11] text-white p-4 md:p-8 font-['Noto_Sans_KR'] antialiased selection:bg-[#ff9d00] selection:text-black">
+      <div className="max-w-[1100px] mx-auto">
+        <header className="mb-8 pb-6 mt-4 border-b border-[#333] flex flex-col lg:flex-row lg:items-stretch justify-between gap-4">
+          <div className="flex items-start gap-4 flex-shrink-0">
+            <div className="relative flex-shrink-0">
+              <div className="bg-[#ff9d00] text-black px-5 h-[60px] flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_rgba(255,157,0,0.2)] uppercase overflow-hidden">
+                <span className="font-['Noto_Sans_KR'] font-black text-[24px] tracking-[0.15em] leading-none">OREUN</span>
+                <span className="font-['Space_Grotesk'] font-black text-[12px] tracking-[0.58em] leading-none pl-[0.58em]">TIMES</span>
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-black border border-[#ff9d00] text-[#ff9d00] text-[8px] px-1.5 font-black leading-none py-0.5 font-mono uppercase">V.1.0</div>
+            </div>
+            <div className="flex flex-col justify-center gap-3 h-[60px] min-w-0">
+              <div className="flex items-center gap-3 font-['Space_Grotesk'] text-[18px] font-black tracking-wider text-white leading-none whitespace-nowrap overflow-hidden shadow-cyan-text-glow uppercase">
+                <Globe className="w-6 h-6 text-[#00e5ff] drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]" /> GLOBAL MARKET REPORT
+              </div>
+              <div className="flex items-center gap-2 ml-7">
+                <a href="https://www.oreun.co.kr" target="_blank" rel="noopener noreferrer" className="group/link relative px-2 py-1 bg-[#ff9d00]/10 border border-[#ff9d00]/30 hover:bg-[#ff9d00] transition-all overflow-hidden flex items-center gap-1.5">
+                   <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover/link:translate-x-full transition-transform duration-500"></div>
+                   <Globe className="w-3 h-3 text-[#ff9d00] group-hover/link:text-black relative z-10" />
+                   <span className="text-[9px] font-black text-[#ff9d00] group-hover/link:text-black font-mono tracking-[0.15em] relative z-10">ACCESS_OFFICIAL_SITE</span>
+                </a>
+                <a href="https://www.daily-m.tv/" target="_blank" rel="noopener noreferrer" className="group/link relative px-2 py-1 bg-[#00e5ff]/10 border border-[#00e5ff]/30 hover:bg-[#00e5ff] transition-all overflow-hidden flex items-center gap-1.5">
+                   <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover/link:translate-x-full transition-transform duration-500"></div>
+                   <Monitor className="w-3 h-3 text-[#00e5ff] group-hover/link:text-black relative z-10" />
+                   <span className="text-[9px] font-black text-[#00e5ff] group-hover/link:text-black font-mono tracking-[0.15em] relative z-10">WATCH_DAILY_M_TV</span>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-end h-[60px] font-['IBM_Plex_Mono'] flex-shrink relative gap-3">
+             {/* Micro-grid background for HUD area */}
+             <div className="absolute inset-0 bg-grid-blue-sub opacity-20 pointer-events-none"></div>
+
+            {/* US CLOSE - Minimal Elegant Style */}
+            <div className="min-h-[60px] flex items-center px-6 py-2 relative overflow-visible bg-[#0a0a0a] border-l-2 border-[#ff9d00] relative z-10">
+               {/* Subtle Background Gradient */}
+               <div className="absolute inset-0 bg-gradient-to-r from-[#ff9d00]/12 to-transparent"></div>
+
+               {/* Content */}
+               <div className="flex flex-col justify-center gap-2.5 relative z-10">
+                  <div className="flex items-center gap-2.5">
+                     <span className="text-[12px] font-black tracking-[0.15em] uppercase text-[#ff9d00]">
+                        US CLOSE
+                     </span>
+                     <span className={`text-[10px] font-black tracking-wide uppercase px-2.5 py-1 rounded ${data.dstStatus === 'ON' ? 'bg-[#00ff00]/20 text-[#00ff00] border border-[#00ff00]/30' : 'bg-[#FF073A]/20 text-[#FF073A] border border-[#FF073A]/30 shadow-[0_0_8px_rgba(255,7,58,0.4)]'}`}>
+                        {data.dstStatus === 'ON' ? '써머타임 적용' : '써머타임 미적용'}
+                     </span>
+                     <span className="text-[14px] text-white font-black tracking-tight">
+                        KST {data.dstStatus === 'ON' ? '22:30~05:00' : '23:30~06:00'}
+                     </span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                     <Calendar className="w-6 h-6 text-[#ff9d00]/70" />
+                     <span className="text-[27px] text-white font-black tracking-tight leading-none font-['Space_Grotesk']">{cleanDate(data.targetDateUS)}</span>
+                     <span className="text-[16px] text-[#999] font-black tracking-wider font-['Space_Grotesk']">({getDayOfWeek(data.targetDateUS)})</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Right Side Info Stack */}
+            <div className="flex flex-col gap-1.5 h-full justify-center relative z-10">
+              {/* Publish Date - Top */}
+              <div className="group flex items-center gap-2 bg-[#001a1a]/90 border border-[#00e5ff]/40 px-2.5 py-1 relative overflow-hidden backdrop-blur-sm hover:border-[#00e5ff] transition-all shadow-[0_0_8px_rgba(0,229,255,0.15)]">
+                 <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#00e5ff]"></div>
+                 <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#00e5ff]"></div>
+                 <span className="text-[7px] text-[#00e5ff]/70 font-black tracking-widest">PUBLISH</span>
+                 <div className="h-3 w-[1px] bg-[#00e5ff]/40"></div>
+                 <span className="text-[10px] text-[#00e5ff] font-bold tracking-tight shadow-[0_0_6px_rgba(0,229,255,0.4)]">{data.publishKST}</span>
+              </div>
+
+              {/* Bottom Row - DST & Location */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-[#0a0a0a]/80 border border-[#444]/30 px-2 py-0.5 rounded-sm backdrop-blur-sm">
+               <span className="text-[7px] text-[#666] font-black tracking-widest">DST</span>
+               <span className="text-[8px] text-[#888] font-bold">{data.dstStatus}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-[#0a0a0a]/80 border border-[#444]/30 px-2 py-0.5 rounded-sm backdrop-blur-sm">
+               <Globe className="w-2 h-2 text-[#666]" />
+               <span className="text-[7px] text-[#777] font-bold tracking-tight">KST</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+        </header>
+
+        <section className="mb-6 border-2 border-[#ff9d00] bg-black p-8 text-center shadow-[0_0_30px_rgba(255,157,0,0.15)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#ff9d00]/30 to-transparent" />
+          <div className="font-['IBM_Plex_Mono'] text-[#ff9d00] text-[15px] font-black mb-4 flex items-center justify-center gap-2.5 tracking-widest uppercase"><Zap className="w-4 h-4" /> [ HEADLINE TODAY ]</div>
+          <h1 className="text-[28px] md:text-[34px] font-black mb-8 leading-[1.4] tracking-tight text-white drop-shadow-md font-['Space_Grotesk'] max-w-3xl mx-auto break-keep whitespace-pre-line">{data.headline}</h1>
+          <div className="flex flex-wrap justify-center gap-8 font-['JetBrains_Mono'] text-[15px]">
+            <div className="flex flex-col items-center gap-1"><span className="text-[#555] text-[10px] font-bold tracking-widest uppercase">NASDAQ 100</span><span className={`font-black ${data.keyIndicators.nasdaq.class === 'up' ? 'text-[#00ff00]' : data.keyIndicators.nasdaq.class === 'down' ? 'text-[#FF073A]' : 'text-[#666]'}`}>{data.keyIndicators.nasdaq.val} <span className="text-[11px] opacity-80">{data.keyIndicators.nasdaq.chg}</span></span></div>
+            <div className="w-[1px] h-10 bg-[#333]" />
+            <div className="flex flex-col items-center gap-1"><span className="text-[#555] text-[10px] font-bold tracking-widest uppercase">VIX INDEX</span><span className={`font-black ${data.keyIndicators.vix.class === 'down' ? 'text-[#00ff00]' : data.keyIndicators.vix.class === 'up' ? 'text-[#FF073A]' : 'text-[#666]'}`}>{data.keyIndicators.vix.val}</span></div>
+            <div className="w-[1px] h-10 bg-[#333]" />
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[#555] text-[10px] font-bold tracking-widest uppercase">FEAR & GREED INDEX</span>
+              <HorizontalBar value={Number(data.keyIndicators.fearGreed.val)} width={160} height={10} label={data.keyIndicators.fearGreed.label} />
+            </div>
+          </div>
+        </section>
+
+        {/* 1. DAILY MARKET SNAPSHOT */}
+        <SectionHeader title="DAILY MARKET SNAPSHOT (핵심 지수 및 매크로)" isOpenDefault={false}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2.5">
+            {data.indices.find(idx => idx.ticker === 'DJI') && <IndexCard item={data.indices.find(idx => idx.ticker === 'DJI')} />}
+            {data.indices.find(idx => idx.ticker === 'VIX') && <IndexCard item={data.indices.find(idx => idx.ticker === 'VIX')} />}
+            {data.indices.find(idx => idx.ticker === 'NDX') && <IndexCard item={data.indices.find(idx => idx.ticker === 'NDX')} />}
+            {data.indices.find(idx => idx.ticker === 'MOVE') && <IndexCard item={data.indices.find(idx => idx.ticker === 'MOVE')} />}
+            {data.indices.find(idx => idx.ticker === 'SPX') && <IndexCard item={data.indices.find(idx => idx.ticker === 'SPX')} />}
+            {data.indices.find(idx => idx.ticker === 'F&G') && <IndexCard item={data.indices.find(idx => idx.ticker === 'F&G')} />}
+            {data.indices.find(idx => idx.ticker === 'RUT') && <IndexCard item={data.indices.find(idx => idx.ticker === 'RUT')} />}
+            {data.indices.find(idx => idx.ticker === 'DXY') && <IndexCard item={data.indices.find(idx => idx.ticker === 'DXY')} />}
+            {data.indices.find(idx => idx.ticker === 'SOX') && <IndexCard item={data.indices.find(idx => idx.ticker === 'SOX')} />}
+            {data.indices.find(idx => idx.ticker === 'TNX') && <IndexCard item={data.indices.find(idx => idx.ticker === 'TNX')} />}
+            {data.indices.find(idx => idx.ticker === 'CPCE') && <IndexCard item={data.indices.find(idx => idx.ticker === 'CPCE')} />}
+            {data.indices.find(idx => idx.ticker === 'UST2Y') && <IndexCard item={data.indices.find(idx => idx.ticker === 'UST2Y')} />}
+          </div>
+        </SectionHeader>
+
+        {/* 2-A. GLOBAL COMMODITY INDEX */}
+        <SectionHeader title="GLOBAL COMMODITY INDEX (글로벌 원자재 인덱스)" isOpenDefault={false}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {commoditiesAll.map((item, i) => (<IndexCard key={`cmd-${i}`} item={item} theme="asset" />))}
+          </div>
+        </SectionHeader>
+
+        {/* 2-B. CRYPTO */}
+        <SectionHeader title="CRYPTOCURRENCY / VIRTUAL ASSET (가상자산 / 암호화폐 / 크립토 / 코인)" isOpenDefault={false}>
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-2.5">
+            {(cryptoState || []).map((item, i) => (<IndexCard key={i} item={item} theme="asset" />))}
+          </div>
+        </SectionHeader>
+
+        {/* NEW SECTION: ALPHA VOICES */}
+        <SectionHeader title="ALPHA VOICES: MARKET INFLUENCERS (핵심 인물 발언 및 정책 로그)" isOpenDefault={false}>
+          {hasVoices && (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="text-[9px] md:text-[10px] text-[#666] font-mono uppercase tracking-widest">FILTER</span>
+              <button
+                type="button"
+                onClick={() => setActiveVoiceTags([])}
+                className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest px-2 py-1 border rounded-sm transition-colors ${
+                  activeVoiceTags.length === 0
+                    ? 'border-[#ff9d00] text-[#ff9d00] bg-[#ff9d00]/10'
+                    : 'border-[#333] text-[#888] bg-black/20 hover:border-[#555] hover:text-[#bbb]'
+                }`}
+                aria-pressed={activeVoiceTags.length === 0}
+              >
+                ALL
+              </button>
+              {orderedVoiceTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleVoiceTag(tag)}
+                  className={`text-[10px] md:text-[11px] font-black uppercase tracking-widest px-2 py-1 border rounded-sm transition-colors ${
+                    activeVoiceTags.includes(tag)
+                      ? 'border-[#ff9d00] text-[#ff9d00] bg-[#ff9d00]/10'
+                      : 'border-[#333] text-[#888] bg-black/20 hover:border-[#555] hover:text-[#bbb]'
+                  }`}
+                  aria-pressed={activeVoiceTags.includes(tag)}
+                >
+                  {getVoiceTagLabel(tag)}
+                </button>
+              ))}
+              <span className="text-[9px] md:text-[10px] text-[#555] font-mono uppercase tracking-widest md:ml-auto">
+                SHOWING {filteredVoices.length}/{voiceData.length}
+              </span>
+            </div>
+          )}
+          <div className="flex flex-col h-auto">
+            {filteredVoices.map((v, i) => (
+              <MarketVoiceItem key={i} v={v} />
+            ))}
+          </div>
+        </SectionHeader>
+
+        {/* 3. HEADLINE BREAKDOWN - 고정형 터미널 윈도우 스타일 + 토글 */}
+        <details open className="mb-10 relative overflow-hidden group/insight-window h-auto">
+          <summary className="list-none cursor-pointer outline-none">
+            <div className="relative border border-[#333] border-b-0 bg-[#15120e]">
+              <div className="bg-[#221a0f] p-3.5 border-b border-[#333] flex justify-between items-center transition-colors group-hover/insight-window:bg-[#2a2115]">
+                <div className="flex items-center gap-3">
+                  <Layout className="w-3.5 h-3.5 text-[#ff9d00]" />
+                  <FlagUS className="w-[18px] h-[12px] rounded-[2px] border border-[#333] shrink-0" />
+                  <span className="font-['IBM_Plex_Mono'] font-black text-[13px] text-[#ff9d00] tracking-[0.1em] uppercase">HEADLINE BREAKDOWN (헤드라인 상세 분석)</span>
+                </div>
+                <div className="flex gap-4 items-center">
+                  <span className="text-[9px] text-[#ff9d00]/50 font-mono uppercase group-open/insight-window:hidden">CLICK TO EXPAND_NODE</span>
+                  <div className="flex gap-1.5 items-center">
+                    <ChevronDown className="w-3 h-3 text-[#ff9d00] transition-transform group-open/insight-window:rotate-180" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#ff9d00]/30 animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </summary>
+          
+          <div className="relative border border-[#333] bg-[#0c0f16] h-auto">
+            <div className="p-6 relative h-auto">
+              <div className="window-scan opacity-20"></div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 font-['IBM_Plex_Mono']">
+                {[
+                  { label: 'CORE TRIGGER', val: data.breakdown.trigger, icon: Zap, color: 'text-[#ff9d00]', border: 'border-[#ff9d00]' },
+                  { label: 'MARKET DRIVER', val: data.breakdown.driver, icon: Compass, color: 'text-[#ff9d00]', border: 'border-[#ff9d00]' },
+                  { label: 'LEAD SECTOR', val: data.breakdown.mover, icon: Target, color: 'text-[#ff9d00]', border: 'border-[#ff9d00]' }
+                ].map((item, i) => (
+                  <div key={i} className={`bg-[#151109] p-5 border-l-4 ${item.border} shadow-[inset_0_0_25px_rgba(255,157,0,0.05)] relative overflow-hidden group/item transition-all hover:bg-[#1f1a10] h-full`}>
+                    <div className="absolute top-0 right-0 p-2 opacity-5 group-hover/item:opacity-15 transition-opacity">
+                      <item.icon className={`w-12 h-12 ${item.color}`} />
+                    </div>
+                    <div className="absolute inset-0 bg-grid-orange opacity-[0.03] pointer-events-none"></div>
+                    
+                    <div className="flex items-center gap-2 mb-2 relative z-10 text-[11px]">
+                       <item.icon className={`w-4 h-4 ${item.color}`} />
+                       <div className={`${item.color} font-black tracking-[0.15em] uppercase opacity-90`}>{item.label}</div>
+                    </div>
+                    <div className="font-black text-[17px] text-white tracking-tight uppercase font-['JetBrains_Mono'] relative z-10 leading-snug break-keep whitespace-normal h-auto">
+                      {item.val}
+                    </div>
+                    <div className={`absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-[#ff9d00] to-transparent w-full opacity-30`}></div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mb-8 relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Terminal className="w-3 h-3 text-[#555]" />
+                  <span className="text-[10px] text-[#555] font-black uppercase tracking-widest font-mono">Detailed_System_Logs</span>
+                </div>
+                <ul className="space-y-4 px-1 font-['Noto_Sans_KR']">
+                  {data.breakdown.details.map((point, i) => (
+                    <li key={i} className="flex gap-4 text-[15px] leading-[1.6] text-gray-300 pb-4 border-b border-[#222]/50 last:border-0 last:pb-0 font-bold h-auto">
+                      <span className="text-[#ff9d00] font-black mt-0.5">/</span>
+                      <p className="break-keep whitespace-normal h-auto">{point}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Insight Box (Green) */}
+              <div className="relative group/insight-box z-10 mb-6 h-auto">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00ff00]/20 to-transparent blur opacity-20 group-hover/insight-box:opacity-40 transition duration-1000"></div>
+                <div className="bg-[#001a00] border border-solid border-[#004400] p-6 font-['IBM_Plex_Mono'] text-[12px] text-[#00ff00] leading-relaxed relative overflow-hidden shadow-[0_0_30px_rgba(0,255,0,0.05)] h-auto min-h-[100px]">
+                  <div className="absolute inset-0 bg-grid-overlay pointer-events-none opacity-20"></div>
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/insight-box:opacity-20 transition-opacity">
+                    <Terminal className="w-16 h-16" />
+                  </div>
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[#00ff00] opacity-50"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-1.5 bg-[#00ff00]/20 border border-[#00ff00]/40 rounded-sm">
+                        <Sparkles className="w-4 h-4 text-[#00ff00]" />
+                      </div>
+                      <span className="font-black tracking-[0.2em] uppercase text-[#00ff00] text-[11px] underline decoration-dotted underline-offset-4 font-mono">
+                        [ SYSTEM_NODE_INSIGHT_INTELLIGENCE ]
+                      </span>
+                    </div>
+                    <div className="font-['Noto_Sans_KR'] text-[15px] font-bold pl-2 border-l-2 border-[#00ff00]/20 leading-relaxed text-[#00ff00]/90 break-keep whitespace-normal h-auto">
+                      {data.breakdown.insight}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Correction Monitor Box (Blue) */}
+              <div className="relative group/correction-box z-10 h-auto">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00e5ff]/20 to-transparent blur opacity-10 group-hover/correction-box:opacity-30 transition duration-1000"></div>
+                <div className="bg-[#0c1a1a] border border-solid border-[#004444] p-6 font-['IBM_Plex_Mono'] text-[12px] text-[#00e5ff] leading-relaxed relative overflow-hidden shadow-[0_0_30px_rgba(0,229,255,0.05)] h-auto min-h-[100px]">
+                  <div className="absolute inset-0 bg-grid-blue-sub pointer-events-none opacity-20"></div>
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/correction-box:opacity-20 transition-opacity">
+                    <ShieldAlert className="w-16 h-16" />
+                  </div>
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[#00e5ff] opacity-50"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-1.5 bg-[#00e5ff]/20 border border-[#00e5ff]/40 rounded-sm">
+                        <EyeOff className="w-4 h-4 text-[#00e5ff]" />
+                      </div>
+                      <span className="font-black tracking-[0.2em] uppercase text-[#00e5ff] text-[11px] underline decoration-dotted underline-offset-4 font-mono">
+                        [ MARKET_CORRECTION_LOG_MONITOR ]
+                      </span>
+                    </div>
+                    <div className="font-['Noto_Sans_KR'] text-[15px] font-bold pl-2 border-l-2 border-[#00e5ff]/20 leading-relaxed text-[#00e5ff]/90 break-keep whitespace-normal h-auto">
+                      {data.breakdown.correction}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#15120e] px-4 py-1.5 border-t border-[#333] flex justify-between items-center text-[9px] font-black text-[#555] font-mono tracking-tighter uppercase">
+               <div className="flex gap-4 uppercase">
+                  <span>STATUS: LOGGED_IN</span>
+                  <span>SESSION_ID: 0xREUN_INTEL</span>
+               </div>
+               <span className="text-[#ff9d00]/60">OREUN_ANALYSIS_ENGINE_STABLE</span>
+            </div>
+          </div>
+        </details>
+
+        {/* 4. 국내 대응 전략 */}
+        <SectionHeader
+          title="KOREA MARKET STRATEGY : 국내 시장 전략"
+          isOpenDefault={true}
+          variant="strategy"
+          icon={<FlagKR className="w-[18px] h-[12px] rounded-[2px] border border-[#333] shrink-0" />}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {DOMESTIC_TEMPLATE.map((entry) => {
+              const item = getDomesticValue(data.domestic, entry.key);
+              return (
+                <DataCard
+                  key={entry.key}
+                  label={entry.label}
+                  val={item.val}
+                  statusClass={item.statusClass}
+                  layout={entry.layout}
+                  chipTheme={entry.chipTheme}
+                  chipLayout={entry.chipLayout}
+                  meta={entry.meta}
+                  sub={item.sub}
+                  ohlc={item.ohlc}
+                  metrics={item.metrics}
+                  metricCols={entry.metricCols}
+                  borderClass={entry.borderClass}
+                  hoverBorderClass={entry.hoverBorderClass}
+                  metricBorderClass={entry.metricBorderClass}
+                  metricGlowClass={entry.metricGlowClass}
+                />
+              );
+            })}
+          </div>
+        </SectionHeader>
+
+        {/* 5. GICS SECTOR MAP */}
+        <SectionHeader title="CORE 11+1 SECTORS & Market Leaders (전체 업종 및 주도 테마)" isOpenDefault={false}>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-12 items-stretch h-auto">
+            {data.gicsSectors.slice(0, 12).map((s, i) => {
+              const dir = getDirection(s.chg);
+              const heatmapBg = dir === 'up' ? 'bg-[#08150d]' : dir === 'down' ? 'bg-[#15080a]' : 'bg-[#0a0a0a]';
+              const isAI = s.name.includes("AI INFRA");
+              const borderStyle = isAI ? "border-[#ff9d00] shadow-[0_0_15px_rgba(255,157,0,0.1)]" : "border-[#333]";
+              
+              return (
+                <div key={i} className={`${heatmapBg} relative p-3.5 border border-dashed ${borderStyle} hover:border-solid hover:border-[#555] transition-all flex flex-col justify-between group/gics h-auto min-h-[135px]`}>
+                  <CornerBrackets />
+                  <div className="flex justify-between items-start mb-2 relative z-10 font-['JetBrains_Mono'] h-auto">
+                    <div className="flex items-start gap-2.5 h-auto">
+                      <div className="mt-1">{dir === 'up' ? <TrendingUp className="w-3.5 h-3.5 text-[#00ff00]" /> : dir === 'down' ? <TrendingDown className="w-3.5 h-3.5 text-[#FF073A]" /> : <Activity className="w-3.5 h-3.5 text-[#555]" />}</div>
+                      <div className="flex flex-col h-auto">
+                        <div className="text-[15px] font-black text-white leading-tight font-['Space_Grotesk'] uppercase">{s.name}</div>
+                        <div className="text-[#777] font-medium text-[11px] lowercase leading-none mt-1">({s.kName})</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className={`text-[13px] font-black ${getColorClass(s.chg)}`}>{s.chg}</span>
+                      <span className="text-[9px] text-[#555] mt-1 tracking-wider uppercase group-hover/gics:text-[#ff9d00]">[{s.ticker}]</span>
+                    </div>
+                  </div>
+                  {Array.isArray(s.leaders) && s.leaders.length > 0 && (
+                    <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[9px] font-['IBM_Plex_Mono'] uppercase tracking-tight">
+                      <span className="text-[8px] text-[#666] font-black tracking-widest">LEADERS</span>
+                      {s.leaders.map((leader, idx) => (
+                        <span
+                          key={`${s.ticker}-leader-${leader}-${idx}`}
+                          className="relative border border-[#222] bg-[#0b0b0b]/70 text-[#ddd] px-1.5 py-0.5 rounded-sm font-bold group/ticker"
+                        >
+                          {leader}
+                          {getTickerTooltip(leader) && (
+                            <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#0b0b0b] border border-[#333] text-[10px] text-[#ddd] px-2 py-1 rounded opacity-0 group-hover/ticker:opacity-100 transition z-20 shadow-[0_4px_10px_rgba(0,0,0,0.35)]">
+                              {getTickerTooltip(leader)}
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {Array.isArray(s.movers) && s.movers.length > 0 && (
+                    <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[9px] font-['IBM_Plex_Mono'] uppercase tracking-tight">
+                      <span className="text-[8px] text-[#ff9d00]/80 font-black tracking-widest">MOVERS</span>
+                      {s.movers.map((mover, idx) => (
+                        <span
+                          key={`${s.ticker}-mover-${mover}-${idx}`}
+                          className="relative border border-[#ff9d00]/35 bg-[#1a1208]/60 text-[#ffd29a] px-1.5 py-0.5 rounded-sm font-bold group/ticker"
+                        >
+                          {mover}
+                          {getTickerTooltip(mover) && (
+                            <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#0b0b0b] border border-[#333] text-[10px] text-[#ddd] px-2 py-1 rounded opacity-0 group-hover/ticker:opacity-100 transition z-20 shadow-[0_4px_10px_rgba(0,0,0,0.35)]">
+                              {getTickerTooltip(mover)}
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-auto pt-2 border-t border-dashed border-[#222] relative z-10 h-auto">
+                    <div className="flex items-center gap-1.5 mb-1.5 font-bold"><span className="text-[8px] bg-[#222] text-[#888] px-1 tracking-tighter uppercase rounded-sm border border-[#333]">Catalyst</span><span className="text-[9px] text-[#ff9d00] uppercase font-['IBM_Plex_Mono'] tracking-tight">{s.catalyst}</span></div>
+                    <div className="text-[14px] text-white leading-relaxed font-['IBM_Plex_Sans_Condensed'] font-medium break-keep whitespace-normal h-auto">/ {s.reason}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="relative h-px w-full border-t border-dashed border-[#333] mb-10 mt-12">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#0b0e11] px-6 flex items-center gap-3">
+              <Layers className="w-5 h-5 text-[#00b3ff]" />
+              <span className="text-[16px] text-[#00b3ff] font-black tracking-[0.3em] uppercase">Market_Leaders_Insight</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-1 h-auto">
+            {data.coreThemes.map((t, i) => (
+              <div key={i} className="relative group/theme-card h-auto">
+                {/* Decorative background / Border */}
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#00b3ff]/20 to-transparent opacity-50 group-hover/theme-card:opacity-100 transition duration-500"></div>
+                
+                <div className="relative bg-[#0d1117] border border-[#222] overflow-hidden h-auto">
+                  {/* Card Header Bar */}
+                  <div className="bg-[#1a1f26] px-4 py-2 border-b border-[#222] flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-[#00b3ff]"></div>
+                      <span className="text-[10px] font-black text-[#00b3ff] font-mono tracking-widest uppercase">INTEL_BRIEFING_NODE_{i+1}</span>
+                    </div>
+                    <span className="text-[9px] text-[#555] font-black font-mono uppercase">LVL: {t.intensity}</span>
+                  </div>
+
+                  <div className="p-5 flex gap-4 h-auto">
+                    {/* Side Intensity Bar */}
+                    <div className="flex flex-col gap-1 w-1 flex-shrink-0">
+                       {[1,2,3,4,5].map(b => (
+                         <div key={b} className={`w-full flex-1 ${b <= 3 ? 'bg-[#00b3ff]' : 'bg-[#222]'}`}></div>
+                       ))}
+                    </div>
+
+                    <div className="flex-1 h-auto">
+                      <div className="flex flex-col mb-4 h-auto">
+                         <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-[#00b3ff]/10 text-[#00b3ff] text-[8px] px-1.5 py-0.5 border border-[#00b3ff]/30 font-black tracking-tighter uppercase">#{t.tag}</span>
+                         </div>
+                         <h3 className="text-[20px] font-black text-white tracking-tighter uppercase font-['JetBrains_Mono'] leading-none">{t.title}</h3>
+                         <span className="text-[13px] text-[#00b3ff] font-bold mt-1 opacity-80">({t.kName})</span>
+                      </div>
+                      <p className="text-[14px] text-gray-400 font-medium leading-[1.6] break-keep whitespace-normal h-auto italic">
+                        <span className="text-[#00b3ff] font-black mr-1 uppercase">>></span> {t.desc}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Decorative Footer */}
+                  <div className="px-4 py-1.5 bg-black/40 border-t border-[#1a1f26] flex justify-end">
+                     <div className="flex gap-1">
+                        <div className="w-1 h-1 bg-[#333]"></div>
+                        <div className="w-1 h-1 bg-[#333]"></div>
+                        <div className="w-8 h-1 bg-[#00b3ff]/30"></div>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionHeader>
+
+        {/* 6. MAGNIFICENT 7 */}
+        <SectionHeader title="MAGNIFICENT 7 (빅테크 & 플랫폼 선도주 실시간 추적)" isOpenDefault={false}>
+          <div className="flex flex-col h-auto">
+            {data.m7Leaders.slice(0, 7).map((m, i) => (
+              <M7DeepDiveRow key={i} m={m} />
+            ))}
+          </div>
+        </SectionHeader>
+
+        {/* 7. AI INFRASTRUCTURE VALUE CHAIN */}
+        <SectionHeader title="AI INFRASTRUCTURE VALUE CHAIN (Ai 인프라 5단 밸류 체인)" isOpenDefault={false}>
+          <StackSubHeader icon={Cpu} title="Layer 1: Silicon & Packaging (반도체/메모리/장비)" theme={AI_LAYER_THEMES.compute} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 mb-10 items-stretch h-auto">
+            {data.aiStack.hardware.slice(0, 9).map((m, i) => (
+              <div key={i} className="h-full"><TechLeaderCard m={m} theme={AI_LAYER_THEMES.compute} /></div>
+            ))}
+          </div>
+          
+          <StackSubHeader icon={Boxes} title="Layer 2: Systems & Servers (서버/스토리지/시스템)" theme={AI_LAYER_THEMES.systems} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 mb-10 items-stretch h-auto">
+            {data.aiStack.systems.slice(0, 6).map((m, i) => (
+              <div key={i} className="h-full"><TechLeaderCard m={m} theme={AI_LAYER_THEMES.systems} /></div>
+            ))}
+          </div>
+          
+          <StackSubHeader icon={Network} title="Layer 3: Network & Cloud (네트워크/클라우드)" theme={AI_LAYER_THEMES.network} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 mb-10 items-stretch h-auto">
+            {data.aiStack.cloud.slice(0, 6).map((m, i) => (
+              <div key={i} className="h-full"><TechLeaderCard m={m} theme={AI_LAYER_THEMES.network} /></div>
+            ))}
+          </div>
+          
+          <StackSubHeader icon={Database} title="Layer 4: Data & Platform (데이터/플랫폼)" theme={AI_LAYER_THEMES.data} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 mb-10 items-stretch h-auto">
+            {data.aiStack.dataPower.slice(0, 6).map((m, i) => (
+              <div key={i} className="h-full"><TechLeaderCard m={m} theme={AI_LAYER_THEMES.data} /></div>
+            ))}
+          </div>
+
+          <StackSubHeader icon={Zap} title="Layer 5: Power & Thermal (전력/열관리)" theme={AI_LAYER_THEMES.power} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2.5 mb-10 items-stretch h-auto">
+            {data.aiStack.power.slice(0, 6).map((m, i) => (
+              <div key={i} className="h-full"><TechLeaderCard m={m} theme={AI_LAYER_THEMES.power} /></div>
+            ))}
+          </div>
+        </SectionHeader>
+
+        {/* 8. KEY MARKET MOVERS */}
+        <SectionHeader title="KEY MARKET MOVERS (시장 핵심 등락 종목)" isOpenDefault={false}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 h-auto mt-4">
+            {data.otherMovers.map((m, i) => (
+              <MoverFeedItem key={i} m={m} isLast={i >= data.otherMovers.length - 2} />
+            ))}
+          </div>
+        </SectionHeader>
+
+        {/* 9. DAILY MARKET TIMELINE */}
+        <SectionHeader title="DAILY MARKET TIMELINE (시장 주요 타임라인 로그)" isOpenDefault={false}>
+          <div className="mb-4 px-2 h-auto relative">
+            <div className="space-y-8 relative">
+              {data.timeline.slice(0, 6).map((item, i) => {
+                const isPreAfter = item.session === 'PRE' || item.session === 'AFTER';
+                const sessionColor = isPreAfter ? 'text-[#00e5ff]' : 'text-[#ff9d00]';
+                const sessionBg = isPreAfter ? 'bg-[#00e5ff]/10 border-[#00e5ff]/20' : 'bg-[#ff9d00]/10 border-[#ff9d00]/20';
+                
+                // Custom Impact Color Logic
+                let impactColor = 'text-[#00ff00]';
+                if (item.event.includes('PRE-MARKET') || item.event.includes('POST-MARKET')) impactColor = 'text-[#00e5ff]';
+                if (item.event.includes('CLOSE-OUT')) impactColor = 'text-[#666]';
+                if (item.event.includes('SYNC')) impactColor = 'text-[#ff9d00]';
+                if (item.impact === 'neutral') impactColor = 'text-gray-400';
+
+                const isLast = i === data.timeline.length - 1;
+
+                return (
+                  <div key={i} className="flex gap-4 md:gap-10 group/time h-auto">
+                    {/* 1. Time Column (Left) */}
+                    <div className="w-[100px] md:w-[140px] flex-shrink-0 flex flex-col justify-start pt-1 gap-1.5 text-right font-mono">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-[#444] font-black uppercase tracking-tighter">EST_TIME</span>
+                        <span className="text-[11px] md:text-[12px] text-gray-500 font-medium tracking-tighter leading-none">{item.timeEST}</span>
+                      </div>
+                      <div className="flex flex-col border-t border-[#222] pt-1.5 mt-1">
+                        <span className="text-[10px] text-[#ff9d00]/40 font-black uppercase tracking-tighter">KST_SYNC</span>
+                        <span className="text-[12px] md:text-[14px] text-[#ff9d00] font-black tracking-tighter leading-none">{item.timeKST}</span>
+                      </div>
+                    </div>
+
+                    {/* 2. Center Node Section */}
+                    <div className="flex flex-col items-center w-4 flex-shrink-0 relative">
+                      <div className={`w-3.5 h-3.5 rounded-full bg-[#0b0e11] border-2 ${isPreAfter ? 'border-[#00e5ff]' : 'border-[#ff9d00]'} z-10 mt-1 shadow-[0_0_10px_rgba(0,0,0,0.5)] group-hover/time:scale-125 transition-transform`}></div>
+                      {!isLast && <div className="w-px flex-1 bg-gradient-to-b from-[#333] via-[#444] to-[#222] my-2"></div>}
+                    </div>
+
+                    {/* 3. Main Content Section (Right) */}
+                    <div className="flex-1 min-w-0 pb-2">
+                      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-3">
+                        <h4 className={`text-[16px] md:text-[18px] font-black uppercase tracking-tight ${impactColor} font-['Space_Grotesk'] leading-none`}>
+                          {item.event}
+                        </h4>
+                        <span className={`w-fit text-[9px] font-black px-2 py-0.5 border ${sessionBg} ${sessionColor} rounded-sm tracking-[0.15em] font-mono`}>
+                          {item.session}_SESSION
+                        </span>
+                      </div>
+
+                      <div className={`relative bg-[#111]/50 p-4 border border-[#222] hover:bg-[#161616] transition-colors shadow-inner`}>
+                        <p className="text-[14px] text-gray-300 font-medium leading-[1.6] break-keep h-auto">
+                          {item.desc}
+                        </p>
+                        
+                        <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-[#222] pt-3">
+                           <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] text-[#555] font-black font-mono uppercase">VOL:</span>
+                              <span className={`text-[10px] font-black font-mono ${item.vol === 'HIGH' ? 'text-[#FF073A]' : 'text-[#888]'}`}>[{item.vol}]</span>
+                           </div>
+                           <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] text-[#555] font-black font-mono uppercase">STATUS:</span>
+                              <span className="text-[10px] font-black text-[#00b3ff]/80 font-mono uppercase">[{item.status}]</span>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </SectionHeader>
+
+        {/* 10. UPCOMING EVENT CALENDAR */}
+        <SectionHeader title="UPCOMING EVENT CALENDAR (주요 경제 일정)" isOpenDefault={false}>
+          <div className="mb-4 px-1 h-auto">
+            <span className="text-[10px] text-[#555] font-black tracking-widest uppercase font-mono block mb-5">NEXT 60-DAY STRATEGIC WATCHLIST</span>
+            <div className="grid grid-cols-1 gap-3 h-auto">
+              {data.events.map((ev, i) => {
+                const colors = {
+                  critical: 'border-[#FF073A] bg-[#1a080a] text-[#FF073A]',
+                  high:     'border-[#ff9d00] bg-[#151008] text-[#ff9d00]',
+                  normal:   'border-[#00e5ff] bg-[#0a141a] text-[#00e5ff]',
+                  low:      'border-[#00ff00] bg-[#08150d] text-[#00ff00]',
+                  muted:    'border-[#333] bg-[#0d0d0d] text-[#666]'
+                };
+                const currentStyle = colors[ev.impact] || colors.normal;
+                return (
+                  <div key={i} className={`relative p-4 border ${currentStyle.split(' ')[0]} ${currentStyle.split(' ')[1]} flex flex-col md:flex-row md:items-center gap-4 transition-all hover:brightness-125 group/event shadow-[0_4px_15px_rgba(0,0,0,0.2)] h-auto overflow-hidden`}>
+                    {ev.impact === 'critical' && <div className="absolute top-0 left-0 w-full h-[2px] bg-[#FF073A] shadow-[0_0_10px_#FF073A]"></div>}
+                    <CornerBrackets />
+                    <div className="flex flex-col items-center justify-center min-w-[65px] h-[65px] bg-black border border-[#333] group-hover/event:border-current transition-colors">
+                      <span className="text-[14px] font-black text-white font-['JetBrains_Mono'] leading-none mb-1">{ev.date}</span>
+                      <span className="text-[9px] font-bold opacity-80 uppercase tracking-widest">{ev.day}</span>
+                    </div>
+                    <div className="flex-1 min-w-0 h-auto">
+                      <div className="flex items-center flex-wrap gap-2 mb-1.5 font-black h-auto">
+                        <div className={`p-1 bg-black border border-[#222] rounded ${currentStyle.split(' ')[2]}`}>
+                          {ev.type === 'Fed' ? <Mic2 className="w-3.5 h-3.5" /> : ev.type === 'Earnings' ? <BarChart3 className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
+                        </div>
+                        <span className="text-[10px] text-[#555] uppercase tracking-tighter">{ev.type}</span>
+                        {ev.tier && <span className="text-[8px] bg-white/10 text-white/50 px-1.5 py-0.5 rounded-sm border border-white/5 uppercase">{ev.tier}</span>}
+                        {ev.ticker && <span className="text-[10px] bg-[#ff9d00]/20 text-[#ff9d00] px-2 py-0.5 rounded-sm border border-[#ff9d00]/30 font-mono">[{ev.ticker}]</span>}
+                        {ev.impact === 'critical' && ev.type === 'Earnings' && <span className="text-[8px] bg-[#FF073A] text-white px-1.5 py-0.5 font-black uppercase shadow-[0_0_8px_#FF073A]">MARKET_MOVER</span>}
+                      </div>
+                      <h4 className="text-[15px] font-black text-white tracking-tight leading-tight uppercase font-['Space_Grotesk'] break-keep group-hover/event:text-white h-auto">{ev.title}</h4>
+                      <p className="text-[12px] text-gray-400 font-medium mt-1 leading-snug break-keep whitespace-normal h-auto font-['Noto_Sans_KR'] uppercase"><span className="text-current font-black mr-1">/</span> {ev.note}</p>
+                    </div>
+                    <div className="hidden md:flex items-center justify-center pr-2 h-auto">
+                       <Bell className={`w-5 h-5 ${ev.impact === 'critical' ? 'text-[#FF073A]' : 'opacity-20 group-hover:opacity-100 transition-opacity'}`} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </SectionHeader>
+
+        {/* FINAL STRATEGY BOX - UPGRADED */}
+        <div className="mt-10 relative overflow-hidden group/final h-auto shadow-2xl">
+          <div className="absolute -inset-1 bg-gradient-to-r from-[#ff9d00]/20 via-[#00b3ff]/10 to-[#ff9d00]/20 opacity-30 blur-xl"></div>
+          
+          <div className="relative border border-[#333] bg-[#0d0d0d] overflow-hidden">
+             {/* Header Bar */}
+             <div className="bg-[#1a1a1a] px-5 py-3 border-b border-[#333] flex flex-wrap justify-between items-center gap-4 relative z-10">
+                <div className="flex items-center gap-3">
+                   <div className="p-1 bg-[#ff9d00]/20 rounded-sm">
+                      <ShieldAlert className="w-4 h-4 text-[#ff9d00]" />
+                   </div>
+                   <span className="font-['IBM_Plex_Mono'] font-black text-[12px] text-[#ff9d00] tracking-[0.2em] uppercase">OREUN.COMMAND_CENTER.FINAL_STRATEGY</span>
+                </div>
+                
+                {/* Decision Badge - Moved to Header */}
+                <div className="flex items-center gap-3 bg-[#00ff00]/5 border border-[#00ff00]/30 px-3 py-1 rounded-sm">
+                   <span className="text-[9px] text-[#00ff00]/60 font-black font-mono tracking-widest uppercase">DECISION</span>
+                   <span className="text-[16px] font-black text-[#00ff00] font-['Space_Grotesk'] tracking-widest uppercase">{data.finalDecision}</span>
+                </div>
+             </div>
+
+             <div className="p-8 relative">
+                {/* Background Decor */}
+                <div className="absolute inset-0 bg-grid-orange opacity-[0.03] pointer-events-none"></div>
+                
+                <div className="flex gap-8 relative z-10">
+                   <div className="hidden md:flex flex-col items-center w-1">
+                      <div className="w-full h-12 bg-[#ff9d00]"></div>
+                      <div className="w-px flex-1 bg-gradient-to-b from-[#ff9d00] via-[#333] to-transparent"></div>
+                   </div>
+
+                   <div className="flex-1 font-['JetBrains_Mono']">
+                      <div className="flex items-center gap-3 mb-6 bg-black/40 w-fit px-3 py-1.5 border border-white/5 rounded-sm">
+                         <span className="text-[#666] font-bold">$</span>
+                         <span className="text-[#00e5ff] text-[13px] font-black tracking-tight uppercase">EXECUTE_STRATEGY --MODEL ALPHA_V2.5</span>
+                         <span className="terminal-cursor"></span>
+                      </div>
+
+                      <div className="mb-10 max-w-[85%]">
+                         <p className="text-[20px] md:text-[22px] text-white leading-[1.6] font-black font-['Noto_Sans_KR'] break-keep uppercase">
+                           {data.finalAction}
+                         </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-12 pt-8 border-t border-[#222] relative">
+                         <div className="flex flex-col gap-2 uppercase">
+                            <span className="text-[10px] text-[#555] font-black tracking-widest font-mono">CONFIDENCE_SCORE</span>
+                            <div className="flex items-end gap-1 mb-1 uppercase">
+                               <span className="text-[18px] text-[#00ff00] font-black leading-none">98.42</span>
+                               <span className="text-[10px] text-[#00ff00]/60 font-bold mb-0.5 uppercase">%</span>
+                            </div>
+                            <HorizontalBar value={98.42} width="100%" height={6} label="" className="opacity-80" />
+                         </div>
+
+                         <div className="flex flex-col gap-2 uppercase">
+                            <span className="text-[10px] text-[#555] font-black tracking-widest font-mono uppercase">THREAT_LEVEL</span>
+                            <span className="text-[18px] text-[#ff9d00] font-black tracking-tighter uppercase">{data.threatLevel}</span>
+                            <div className="flex gap-1">
+                               {[1,2,3,4,5].map(b => (
+                                 <div key={b} className={`h-1 flex-1 ${b <= 2 ? 'bg-[#ff9d00]' : 'bg-[#222]'}`}></div>
+                               ))}
+                            </div>
+                         </div>
+
+                         <div className="flex flex-col gap-2 uppercase">
+                            <span className="text-[10px] text-[#555] font-black tracking-widest font-mono uppercase">MARKET_BIAS</span>
+                            <div className="flex items-center gap-2 uppercase">
+                               <TrendingUp className="w-4 h-4 text-[#00ff00]" />
+                               <span className="text-[14px] text-white font-black tracking-tighter uppercase">{data.marketBias}</span>
+                            </div>
+                            <span className="text-[9px] text-gray-500 font-medium italic normal-case tracking-tight">Signal: Long_Gamma</span>
+                         </div>
+
+                         <div className="flex flex-col gap-2 text-right md:text-left uppercase">
+                            <span className="text-[10px] text-[#555] font-black tracking-widest font-mono uppercase">NODE_LATENCY</span>
+                            <div className="flex flex-col gap-0.5 uppercase">
+                               <span className="text-[13px] text-blue-400 font-black tracking-tight uppercase">12ms</span>
+                               <span className="text-[11px] text-[#444] font-mono uppercase">SYNC: {data.generationTime}</span>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+             <div className="bg-[#111] px-5 py-2 border-t border-[#222] flex justify-between items-center uppercase">
+                <span className="text-[9px] text-[#444] font-mono tracking-widest uppercase">VERIFICATION_CODE: 0xREUN_ALPHA_SIG_9982</span>
+                <div className="flex items-center gap-2 uppercase">
+                   <div className="w-2 h-2 rounded-full bg-[#00ff00]"></div>
+                   <span className="text-[9px] text-[#555] font-black font-mono uppercase">SYSTEM_SIGN_OFF_STABLE</span>
+                </div>
+             </div>
+          </div>
+        </div>
+        
+        {/* FOOTER */}
+        <footer className="mt-16 mb-20 border-t border-[#333]">
+           <div className="bg-[#111] border-b border-[#222] py-2 px-4 flex flex-wrap justify-between items-center gap-4 text-[10px] font-bold">
+              <div className="flex items-center gap-6 uppercase">
+                 <div className="flex items-center gap-2 uppercase"><span className="bb-key bb-key-orange uppercase">HELP</span><span className="text-gray-400 uppercase tracking-tighter">Press <span className="text-white">F1</span> for Assistance</span></div>
+                 <div className="flex items-center gap-2 uppercase"><span className="bb-key uppercase">MENU</span><span className="text-gray-400 uppercase tracking-tighter">Main Navigation</span></div>
+                 <div className="flex items-center gap-2 uppercase"><span className="bb-key uppercase">OREUN</span><span className="text-gray-400 uppercase tracking-tighter">Terminal Logic</span></div>
+              </div>
+              <div className="flex items-center gap-4 font-mono uppercase tracking-widest text-[9px]">
+                 <span className="text-[#ff9d00] bg-[#ff9d00]/10 px-2 py-0.5 rounded border border-[#ff9d00]/20 uppercase">NODE: CLUSTER_01</span>
+                 <span className="text-blue-400 uppercase">SESSION: 0x8892A</span>
+                 <span className="text-white uppercase">USER: PREM_NODE_USER</span>
+              </div>
+           </div>
+           <div className="py-8 px-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 font-bold uppercase">
+              <div className="flex items-center gap-5">
+                 <div className="bg-[#ff9d00] text-black w-10 h-10 flex items-center justify-center font-black text-xl uppercase">O</div>
+                 <div>
+                    <h5 className="text-[12px] text-white tracking-widest uppercase">OREUN ACADEMY RESEARCH LAB</h5>
+                    <p className="text-[10px] text-gray-500 font-medium font-['Noto_Sans_KR'] normal-case">Empowering Alpha Decisions through Quantitative Intelligence</p>
+                 </div>
+              </div>
+              <div className="flex gap-8 font-mono">
+                 <div className="flex flex-col gap-1 uppercase">
+                    <span className="text-[9px] text-[#555] tracking-widest uppercase">Network Status</span>
+                    <div className="flex items-center gap-2 uppercase">
+                       <div className="w-1.5 h-1.5 rounded-full bg-[#00ff00]"></div>
+                       <span className="text-[11px] text-gray-300 tracking-widest uppercase">CORE_SYNC_ACTIVE</span>
+                    </div>
+                 </div>
+                 <div className="flex flex-col gap-1 text-right uppercase">
+                    <span className="text-[9px] text-[#555] tracking-widest uppercase">System Version</span>
+                    <span className="text-[11px] font-bold text-white tracking-widest uppercase">V1.0.0-STABLE</span>
+                 </div>
+              </div>
+           </div>
+           <div className="bg-black py-3 px-4 text-center">
+              <p className="text-[9px] text-[#444] tracking-[0.4em] uppercase font-black font-mono">
+                COPYRIGHT © 2024 OREUN QUANTITATIVE RESEARCH LAB. ALL RIGHTS RESERVED. // DATA SOURCES: BBG, REUTERS, OREUN_INTEL.
+              </p>
+           </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// Mount
+try {
+  ReactDOM.render(<App />, document.getElementById('root'));
+} catch (err) {
+  const root = document.getElementById('root');
+  if (root) {
+    root.innerHTML = `<div style="color:#fff;background:#0b0e11;padding:16px;font-family:monospace;line-height:1.5;">
+      렌더링 오류가 발생했습니다: ${err.message}. CDN 차단 또는 Babel 로드 문제일 수 있습니다. 네트워크 연결을 확인하거나 브라우저 콘솔 에러를 공유해주세요.
+    </div>`;
+  }
+  console.error(err);
+}
+  </script>
+</body>
+</html>
