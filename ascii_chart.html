@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASCII Chart Generator</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      padding: 15px;
+      margin: 0;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #00ff00;
+      font-size: 1.2em;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+    }
+    .chart-box {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 15px 0;
+      overflow-x: auto;
+      white-space: pre;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .chart-title {
+      color: #ff9d00;
+      font-size: 0.9em;
+      margin-bottom: 8px;
+    }
+    .cyan { color: #00e5ff; }
+    .orange { color: #ff9d00; }
+    .green { color: #00ff00; }
+    .red { color: #ff4444; }
+    .dim { color: #666; }
+
+    .controls {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    input, select, button {
+      background: #1a1a1a;
+      border: 1px solid #444;
+      color: #00ff00;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      width: 100%;
+      margin: 5px 0;
+    }
+    button {
+      background: #00ff00;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:active {
+      background: #00cc00;
+    }
+    label {
+      color: #888;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <h1>> ASCII_CHART_GENERATOR</h1>
+
+  <div class="chart-box">
+    <div class="chart-title">// BAR CHART - Monthly Sales</div>
+<span class="dim">──────────────────────────────────────────────</span>
+<span class="cyan">Jan</span> │ <span class="green">████████████░░░░░░░░░░░░░░</span> 12,500
+<span class="cyan">Feb</span> │ <span class="green">██████████████████░░░░░░░░</span> 18,200
+<span class="cyan">Mar</span> │ <span class="green">███████████████░░░░░░░░░░░</span> 15,800
+<span class="cyan">Apr</span> │ <span class="green">██████████████████████░░░░</span> 22,100
+<span class="cyan">May</span> │ <span class="green">███████████████████░░░░░░░</span> 19,500
+<span class="cyan">Jun</span> │ <span class="green">██████████████████████████</span> 25,300
+<span class="dim">──────────────────────────────────────────────</span>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">// LINE CHART - Stock Price</div>
+<span class="dim">158.9</span> ┤                              <span class="green">●</span>
+      │                           <span class="dim">··</span><span class="green">·</span>
+      │                        <span class="dim">··</span><span class="green">●</span>
+      │                     <span class="dim">···</span>
+      │           <span class="green">●</span><span class="dim">·······</span><span class="green">●</span>
+      │        <span class="dim">···</span>
+      │     <span class="green">●</span><span class="dim">··</span>        <span class="dim">···</span>
+      │  <span class="dim">···</span>           <span class="green">●</span>
+<span class="dim">142.8</span> ┤<span class="green">●</span>
+      └─────────────────────────────────
+       <span class="dim">Mon Tue Wed Thu Fri Sat Sun</span>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">// SPARKLINE - Temperature</div>
+<span class="orange">▁▃▂▅▇▆▄▃▂▁ ▂▄▆█▇</span>  <span class="dim">min: 21 | max: 29</span>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">// TABLE - Crypto Market</div>
+┌───────┬────────┬────────┬────────┐
+│ <span class="cyan">Asset</span> │ <span class="cyan">Price</span>  │ <span class="cyan">Change</span> │ <span class="cyan">Volume</span> │
+├───────┼────────┼────────┼────────┤
+│  BTC  │ 42,150 │ <span class="green">+2.3%</span>  │  12.5B │
+│  ETH  │  2,280 │ <span class="red">-0.8%</span>  │   5.2B │
+│  SOL  │  98.50 │ <span class="green">+5.1%</span>  │   1.8B │
+│  XRP  │   0.62 │ <span class="green">+1.2%</span>  │   892M │
+└───────┴────────┴────────┴────────┘
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">// PROGRESS BARS</div>
+Download <span class="green">[██████████████████████████████░░░░░░░░░░]</span> 75%
+Upload   <span class="orange">[████████████████░░░░░░░░░░░░░░░░░░░░░░░░]</span> 42%
+Complete <span class="cyan">[████████████████████████████████████████]</span> 100%
+  </div>
+
+  <div class="controls">
+    <div class="chart-title">// CUSTOM SPARKLINE</div>
+    <label>Enter comma-separated values:</label>
+    <input type="text" id="sparkInput" value="10,25,18,42,35,28,55,48,62,40" placeholder="10,20,30,40...">
+    <button onclick="generateSparkline()">GENERATE</button>
+    <div id="sparkOutput" class="chart-box" style="margin-top:10px;"></div>
+  </div>
+
+  <script>
+    function generateSparkline() {
+      const blocks = ' ▁▂▃▄▅▆▇█';
+      const input = document.getElementById('sparkInput').value;
+      const values = input.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+
+      if (values.length === 0) {
+        document.getElementById('sparkOutput').innerHTML = '<span class="red">Invalid input</span>';
+        return;
+      }
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = max - min || 1;
+
+      let spark = '';
+      values.forEach(v => {
+        const idx = Math.round(((v - min) / range) * 8);
+        spark += blocks[Math.max(0, Math.min(8, idx))];
+      });
+
+      document.getElementById('sparkOutput').innerHTML =
+        `<span class="orange">${spark}</span>  <span class="dim">min: ${min} | max: ${max}</span>`;
+    }
+
+    generateSparkline();
+  </script>
+</body>
+</html>
